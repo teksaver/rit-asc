@@ -1,0 +1,62 @@
+@keyframes task-card-enter {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.task-card {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-card);
+  animation: task-card-enter 0.3s ease-out;
+}
+
+.task-card__checkbox {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin: calc(-1 * var(--spacing-sm));
+  border-radius: var(--radius-full);
+  border: 2px solid var(--color-muted);
+  background: transparent;
+  cursor: pointer;
+  padding: 0;
+  position: relative;
+}
+
+.task-card__checkbox::before {
+  content: '';
+  position: absolute;
+  inset: 6px;
+  border-radius: var(--radius-full);
+  background: transparent;
+  transition: background 0.2s ease;
+}
+
+.task-card__checkbox--checked {
+  border-color: var(--color-success);
+}
+
+.task-card__checkbox--checked::before {
+  background: var(--color-success);
+}
+
+.task-card__title {
+  font-size: 16px;
+  color: var(--color-text-primary);
+  transition: color 0.2s ease;
+}
+
+.task-card__title--done {
+  color: var(--color-text-secondary);
+  text-decoration: line-through;
+}

@@ -1,0 +1,21 @@
+services:
+  app:
+    build:
+      context: .
+      dockerfile: .devcontainer/Dockerfile
+    user: node
+    working_dir: /workspace
+    volumes:
+      - .:/workspace
+      - node_modules:/workspace/node_modules
+    ports:
+      - '5173:5173'
+    environment:
+      # Native fs events are unreliable over Docker Desktop's macOS bind-mount
+      # filesystem; polling keeps Vite's HMR working across host platforms.
+      CHOKIDAR_USEPOLLING: 'true'
+      CHOKIDAR_INTERVAL: '300'
+    command: sh -c "npm install --prefer-offline --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+
+volumes:
+  node_modules:

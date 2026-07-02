@@ -1,0 +1,232 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Forge Report : App d'organisation du quotidien</title>
+    <style>
+        :root {
+            --bg-color: #f7f6f2;
+            --text-color: #2b2b2b;
+            --accent-color: #8c2a2a;
+            --border-color: #e2dfd5;
+            --seal-color: #9c27b0; /* Purple for Hardened */
+        }
+        body {
+            font-family: "Georgia", serif;
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            line-height: 1.6;
+            margin: 0;
+            padding: 40px;
+        }
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            background-color: #fff;
+            padding: 50px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.05);
+            border: 1px solid var(--border-color);
+            position: relative;
+        }
+        h1 {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 2em;
+            text-transform: uppercase;
+            letter-spacing: 2px;
+            margin-bottom: 5px;
+            text-align: center;
+        }
+        .subtitle {
+            text-align: center;
+            font-style: italic;
+            color: #666;
+            margin-bottom: 40px;
+            font-size: 1.1em;
+        }
+        .seal-container {
+            position: absolute;
+            top: 30px;
+            right: 40px;
+            width: 120px;
+            height: 120px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            transform: rotate(-15deg);
+        }
+        .seal {
+            width: 100px;
+            height: 100px;
+            border-radius: 50%;
+            border: 4px solid var(--seal-color);
+            color: var(--seal-color);
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-weight: bold;
+            font-size: 14px;
+            text-transform: uppercase;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            line-height: 1.2;
+            box-shadow: 0 0 0 2px #fff, 0 0 0 4px var(--seal-color);
+        }
+        .seal span {
+            display: block;
+        }
+        h2 {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 1.2em;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            border-bottom: 2px solid var(--border-color);
+            padding-bottom: 10px;
+            margin-top: 40px;
+            color: #444;
+        }
+        ul {
+            list-style-type: none;
+            padding: 0;
+        }
+        li {
+            margin-bottom: 20px;
+            padding-left: 20px;
+            border-left: 3px solid var(--border-color);
+        }
+        .lock-item strong {
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            display: block;
+            margin-bottom: 5px;
+            color: #333;
+        }
+        .kill-item {
+            border-left-color: var(--accent-color);
+        }
+        .kill-item strong {
+            color: var(--accent-color);
+        }
+        .personas {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            margin-top: 20px;
+        }
+        .persona {
+            display: flex;
+            align-items: center;
+            background: #fafafa;
+            padding: 10px 15px;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+        }
+        .persona-icon {
+            font-size: 1.5em;
+            margin-right: 15px;
+        }
+        .persona-name {
+            font-weight: bold;
+            font-family: "Helvetica Neue", Helvetica, Arial, sans-serif;
+            font-size: 0.9em;
+        }
+        .persona-title {
+            font-size: 0.8em;
+            color: #666;
+            font-style: italic;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="seal-container">
+            <div class="seal">
+                <span>CONSOLIDÉE<br>(HARDENED)</span>
+            </div>
+        </div>
+        
+        <h1>Rapport de Forge</h1>
+        <div class="subtitle">Application d'organisation du quotidien</div>
+
+        <p>L'idée a été soumise à l'épreuve de la contradiction. Le constat est clair : l'application s'adresse à un public qui n'est pas incapable de s'organiser, mais qui est <strong>épuisé par la fragmentation de ses outils (tableurs, listes)</strong>. Le défi majeur n'est pas la courbe d'apprentissage, mais <strong>le risque d'attrition lié à la dette de culpabilité</strong> lors des pertes de routine.</p>
+
+        <h2>Fondations Verrouillées (Locks)</h2>
+        <ul>
+            <li class="lock-item">
+                <strong>Outil de consolidation pragmatique</strong>
+                L'application sert à regrouper un système qui existe déjà. La saisie des tâches peut se faire avec des données incomplètes (nom seul). L'enrichissement (catégorie, durée) se fait contextuellement : lorsqu'une tâche incomplète n'est pas réalisée, l'interface profite de ce "report" pour proposer de compléter ses caractéristiques afin d'automatiser le prochain placement.
+            </li>
+            <li class="lock-item">
+                <strong>Flexibilité et subjectivité</strong>
+                Le moteur de suggestion n'est qu'une fonctionnalité optionnelle à la demande. L'application assume que la catégorisation est 100% subjective et laissée au contrôle de l'utilisateur.
+            </li>
+            <li class="lock-item">
+                <strong>Amnésie bienveillante (Gestion de la culpabilité)</strong>
+                Pour survivre aux décrochages inévitables (lapses), l'app dé-dramatise le retard via 3 niveaux de priorité. Le niveau par défaut est toujours "Pas vraiment obligé".
+            </li>
+            <li class="lock-item">
+                <strong>Saut de cycle anti-boule-de-neige</strong>
+                Le statut "Reportable" ne repousse jamais bêtement une tâche au lendemain pour créer une montagne de retard. Une routine manquée saute automatiquement au <em>prochain créneau libre dédié à cette catégorie</em>.
+            </li>
+        </ul>
+
+        <h2>Ce qui a été tué (Kills)</h2>
+        <ul>
+            <li class="kill-item">
+                <strong>Le moteur heuristique (IA) d'auto-catégorisation</strong>
+                Rejeté avec succès. L'application ne tentera pas de deviner si "arroser les plantes" relève du ménage ou du loisir. L'utilisateur garde le contrôle sémantique total de son système.
+            </li>
+            <li class="kill-item">
+                <strong>Le modèle de dépendances complexe façon Jira</strong>
+                Les graphes liant la tâche B comme prérequis de la tâche A sont exclus (trop d'effort d'abstraction).
+            </li>
+        </ul>
+
+        <h2>La Chambre d'Épreuve</h2>
+        <p>Ce concept a été confronté, attaqué et affiné par :</p>
+        <div class="personas">
+            <div class="persona">
+                <div class="persona-icon">🎨</div>
+                <div>
+                    <div class="persona-name">Sally</div>
+                    <div class="persona-title">UX Designer</div>
+                </div>
+            </div>
+            <div class="persona">
+                <div class="persona-icon">🧠</div>
+                <div>
+                    <div class="persona-name">Dr Lise</div>
+                    <div class="persona-title">Psychologue Cognitive</div>
+                </div>
+            </div>
+            <div class="persona">
+                <div class="persona-icon">⚡</div>
+                <div>
+                    <div class="persona-name">Victor</div>
+                    <div class="persona-title">Stratège en Innovation</div>
+                </div>
+            </div>
+            <div class="persona">
+                <div class="persona-icon">🌶️</div>
+                <div>
+                    <div class="persona-name">Boundary</div>
+                    <div class="persona-title">Edge-Case Hunter</div>
+                </div>
+            </div>
+            <div class="persona">
+                <div class="persona-icon">🚢</div>
+                <div>
+                    <div class="persona-name">Dana</div>
+                    <div class="persona-title">The Pragmatist</div>
+                </div>
+            </div>
+            <div class="persona">
+                <div class="persona-icon">🎭</div>
+                <div>
+                    <div class="persona-name">Carson</div>
+                    <div class="persona-title">Coach en idéation</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</body>
+</html>

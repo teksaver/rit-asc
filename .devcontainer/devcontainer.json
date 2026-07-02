@@ -1,0 +1,15 @@
+{
+  "name": "RouteIn Dev",
+  "dockerComposeFile": ["../docker-compose.yml"],
+  "service": "app",
+  "workspaceFolder": "/workspace",
+  "forwardPorts": [5173],
+  "portsAttributes": {
+    "5173": {
+      "label": "RouteIn (Vite)",
+      "onAutoForward": "openBrowser"
+    }
+  },
+  "postStartCommand": "sh -c 'npm install --prefer-offline --no-audit --no-fund && (npm run dev -- --host 0.0.0.0 > /tmp/vite-dev.log 2>&1 &)'",
+  "remoteUser": "node"
+}

@@ -8,8 +8,10 @@ function App() {
       <header className="app__header">
         <h1 className="app__title">Dépôt</h1>
       </header>
-      <TaskList />
-      <ProgressiveInput />
+      <main className="app__main">
+        <TaskList />
+        <ProgressiveInput />
+      </main>
     </div>
   )
 }

@@ -4,7 +4,7 @@ baseline_commit: NO_VCS
 
 # Story 1.1: Saisie "Mitraillette" de Tâches Simples (Le Dépôt)
 
-Status: review
+Status: in-progress
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -110,6 +110,25 @@ Claude Sonnet 5 (dev-story workflow)
 - `src/components/TaskList.css`
 - `public/favicon.svg` (conservé du template par défaut)
 
+### Review Findings
+
+- [x] [Review][Patch] Contradiction ID Generation — Architecture Spine exige UUID v4, modifier l'auto-increment `++id` pour utiliser des UUIDs v4.
+- [x] [Review][Patch] Schéma DB incomplet et incorrect [`src/db.js`]
+- [x] [Review][Patch] Valeur de statut invalide (`done` au lieu de `completed`) [`src/components/TaskCard.jsx`]
+- [x] [Review][Patch] TaskList ne filtre pas sur le statut "Dépôt" (`inbox`) [`src/components/TaskList.jsx`]
+- [x] [Review][Patch] Effacement de l'input non instantané ("Mitraillette" UX) [`src/components/ProgressiveInput.jsx`]
+- [x] [Review][Patch] Unhandled Promise Rejections dans les Event Handlers [`src/components/ProgressiveInput.jsx`]
+- [x] [Review][Patch] États de chargement et d'erreur manquants pour useLiveQuery [`src/components/TaskList.jsx`]
+- [x] [Review][Patch] Tests potentiellement instables (Flaky Tests) [`src/components/ProgressiveInput.test.jsx`]
+- [x] [Review][Patch] Conditions de course à la soumission (pas d'état désactivé) [`src/components/ProgressiveInput.jsx`]
+- [x] [Review][Patch] Déficiences Accessibilité / ARIA [`src/components/TaskCard.jsx`]
+- [x] [Review][Patch] Manquement de balise sémantique `<main>` [`src/App.jsx`]
+- [x] [Review][Patch] Exports de modules inconsistants [`src/db.js`]
+- [x] [Review][Defer] Ignorance des préférences utilisateur (Reduced Motion) [`src/components/TaskCard.css`] — deferred, pre-existing
+- [x] [Review][Defer] CSS Reset incomplet et Viewport Units [`src/index.css`] — deferred, pre-existing
+- [x] [Review][Defer] Missing Error Boundary et Graceful Degradation [`src/main.jsx`] — deferred, pre-existing
+
 ## Change Log
 
 - 2026-07-02 — Implémentation complète de la Story 1.1 : scaffold React/Vite, Dexie.js, design system Zen, Progressive Input, Task Card réactive avec micro-animations. Tests unitaires, build et lint validés. Statut passé à "review".
+- 2026-07-02 — Correction des 9 findings `[Review][Patch]` de la revue : `id` en UUID v4 (`crypto.randomUUID()`) au lieu de `++id`, schéma Dexie complété (`categoryId`, `plannedDayId`, `checklist`) et export unique de `db` (nommé) dans `src/db.js` ; vidage/refocus optimiste du champ, `try/catch` sur `db.tasks.add` et garde anti-course (ref `isSubmittingRef`) sans casser le flux "mitraillette" dans `src/components/ProgressiveInput.jsx` ; statut `completed` (plus jamais `done`) et case à cocher exposée en `role="checkbox"`/`aria-checked` dans `src/components/TaskCard.jsx` ; filtre `status === 'inbox'`, distinction chargement (`undefined`)/vide/erreur dans `src/components/TaskList.jsx` ; balise `<main>` sémantique dans `src/App.jsx` ; tests adaptés au nouveau schéma (`src/db.test.js`) et assertion de vidage instantané rendue synchrone (`src/components/ProgressiveInput.test.jsx`). `npm run test`, `npm run build` et `npm run lint` passent tous. Les 3 findings `[Review][Defer]` restent hors scope, inchangés.

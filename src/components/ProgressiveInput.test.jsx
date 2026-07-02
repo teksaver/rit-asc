@@ -15,6 +15,11 @@ describe('ProgressiveInput', () => {
     fireEvent.change(input, { target: { value: 'Appeler le dentiste' } })
     fireEvent.keyDown(input, { key: 'Enter' })
 
+    // The field must clear and keep focus instantly (optimistic UI), synchronously
+    // right after the keyDown event — before the Dexie write promise resolves.
+    expect(input).toHaveValue('')
+    expect(input).toHaveFocus()
+
     await waitFor(async () => {
       const tasks = await db.tasks.toArray()
       expect(tasks).toHaveLength(1)
@@ -23,9 +28,6 @@ describe('ProgressiveInput', () => {
         status: 'inbox',
       })
     })
-
-    expect(input).toHaveValue('')
-    expect(input).toHaveFocus()
   })
 
   it('does not save an empty or whitespace-only task', async () => {

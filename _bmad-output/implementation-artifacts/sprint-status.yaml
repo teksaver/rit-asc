@@ -50,7 +50,7 @@ story_location: /Users/stenier/Progra/RouteIn/_bmad-output/implementation-artifa
 development_status:
   epic-1: in-progress
   1-1-saisie-mitraillette-de-taches-simples: review
-  1-2-environnement-de-test-local: review
+  1-2-environnement-de-test-local: in-progress
   1-3-enrichissement-des-taches: backlog
   1-4-checklists-internes: backlog
   epic-1-retrospective: optional

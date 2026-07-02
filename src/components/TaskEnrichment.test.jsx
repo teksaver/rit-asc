@@ -97,4 +97,53 @@ describe('TaskEnrichment', () => {
       expect(updated.categoryId).toBe(existingId)
     })
   })
+
+  it('adds a checklist item and persists it to Dexie', async () => {
+    const task = await addTask()
+    render(<TaskEnrichment task={task} />)
+
+    const input = screen.getByLabelText('Checklist')
+    fireEvent.change(input, { target: { value: 'Réserver la salle' } })
+    fireEvent.submit(input.closest('form'))
+
+    await waitFor(async () => {
+      const updated = await db.tasks.get(task.id)
+      expect(updated.checklist).toHaveLength(1)
+      expect(updated.checklist[0]).toMatchObject({
+        text: 'Réserver la salle',
+        isCompleted: false,
+      })
+    })
+
+    expect(input).toHaveValue('')
+  })
+
+  it('appends new checklist items without discarding existing ones', async () => {
+    const existingItem = { id: crypto.randomUUID(), text: 'Déjà présent', isCompleted: true }
+    const task = await addTask({ checklist: [existingItem] })
+    render(<TaskEnrichment task={task} />)
+
+    const input = screen.getByLabelText('Checklist')
+    fireEvent.change(input, { target: { value: 'Nouvel item' } })
+    fireEvent.submit(input.closest('form'))
+
+    await waitFor(async () => {
+      const updated = await db.tasks.get(task.id)
+      expect(updated.checklist).toHaveLength(2)
+      expect(updated.checklist[0]).toMatchObject(existingItem)
+      expect(updated.checklist[1]).toMatchObject({ text: 'Nouvel item', isCompleted: false })
+    })
+  })
+
+  it('does not add an empty checklist item', async () => {
+    const task = await addTask()
+    render(<TaskEnrichment task={task} />)
+
+    const input = screen.getByLabelText('Checklist')
+    fireEvent.change(input, { target: { value: '   ' } })
+    fireEvent.submit(input.closest('form'))
+
+    const updated = await db.tasks.get(task.id)
+    expect(updated.checklist).toHaveLength(0)
+  })
 })

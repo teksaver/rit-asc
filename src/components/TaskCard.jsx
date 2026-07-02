@@ -1,5 +1,4 @@
 import { useRef, useState } from 'react'
-import { useLiveQuery } from 'dexie-react-hooks'
 import { SlidersHorizontal } from 'lucide-react'
 import { db } from '../db'
 import { TaskEnrichment, PRIORITY_OPTIONS } from './TaskEnrichment'
@@ -26,8 +25,20 @@ export function TaskCard({ task, categoriesMap }) {
       })
   }
 
+  const toggleChecklistItem = (itemId) => {
+    const updatedChecklist = (task.checklist ?? []).map((item) =>
+      item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item,
+    )
+    db.tasks.update(task.id, { checklist: updatedChecklist }).catch(() => {
+      // Échec silencieux tolérable, comme pour le statut de la tâche ci-dessus.
+    })
+  }
+
+  const isInteractiveTarget = (event) =>
+    event.target.closest('button, input, a, label, [role="checkbox"], [role="button"]')
+
   const handlePointerDown = (event) => {
-    if (!event.isPrimary) return
+    if (!event.isPrimary || isInteractiveTarget(event)) return
     event.currentTarget.setPointerCapture(event.pointerId)
     swipeStartXRef.current = event.clientX
     swipeStartYRef.current = event.clientY
@@ -35,8 +46,8 @@ export function TaskCard({ task, categoriesMap }) {
 
   const handlePointerUp = (event) => {
     if (!event.isPrimary) return
-    event.currentTarget.releasePointerCapture(event.pointerId)
     if (swipeStartXRef.current === null) return
+    event.currentTarget.releasePointerCapture(event.pointerId)
     const deltaX = event.clientX - swipeStartXRef.current
     const deltaY = event.clientY - swipeStartYRef.current
     swipeStartXRef.current = null
@@ -51,7 +62,7 @@ export function TaskCard({ task, categoriesMap }) {
   }
 
   const handlePointerCancel = (event) => {
-    if (!event.isPrimary) return
+    if (!event.isPrimary || swipeStartXRef.current === null) return
     event.currentTarget.releasePointerCapture(event.pointerId)
     swipeStartXRef.current = null
     swipeStartYRef.current = null
@@ -105,6 +116,34 @@ export function TaskCard({ task, categoriesMap }) {
           )}
           {priorityLabel && <span className="task-card__tag">{priorityLabel}</span>}
         </div>
+      )}
+
+      {task.checklist?.length > 0 && (
+        <ul
+          className="task-card__checklist"
+          onPointerDown={(event) => event.stopPropagation()}
+          onPointerUp={(event) => event.stopPropagation()}
+        >
+          {task.checklist.map((item) => (
+            <li key={item.id} className="task-card__checklist-item">
+              <label className="task-card__checklist-label">
+                <input
+                  type="checkbox"
+                  checked={item.isCompleted}
+                  onChange={() => toggleChecklistItem(item.id)}
+                  className="task-card__checklist-checkbox"
+                />
+                <span
+                  className={`task-card__checklist-text${
+                    item.isCompleted ? ' task-card__checklist-text--done' : ''
+                  }`}
+                >
+                  {item.text}
+                </span>
+              </label>
+            </li>
+          ))}
+        </ul>
       )}
 
       {isEnrichmentOpen && <TaskEnrichment task={task} />}

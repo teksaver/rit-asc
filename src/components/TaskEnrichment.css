@@ -60,8 +60,24 @@
   gap: var(--spacing-sm);
 }
 
-.task-enrichment__new-category {
+.task-enrichment__new-category,
+.task-enrichment__checklist-input {
   flex-grow: 1;
+}
+
+.task-enrichment__checklist-input {
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  font-size: 14px;
+  font-family: inherit;
+  min-height: 44px;
+}
+
+.task-enrichment__checklist-input:focus {
+  outline: 2px solid var(--color-accent);
+  outline-offset: -1px;
+  border-color: var(--color-accent);
 }
 
 .task-enrichment__submit {

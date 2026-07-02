@@ -13,6 +13,7 @@ export const PRIORITY_OPTIONS = [
 
 export function TaskEnrichment({ task }) {
   const [newCategoryName, setNewCategoryName] = useState('')
+  const [newChecklistText, setNewChecklistText] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
   // Limitation à 100 catégories pour éviter le chargement infini
   const categories = useLiveQuery(() => db.categories.limit(100).toArray(), [], [])
@@ -58,6 +59,22 @@ export function TaskEnrichment({ task }) {
       console.error(err)
       setErrorMsg("Erreur lors de la création de la catégorie.")
     }
+  }
+
+  const addChecklistItem = (event) => {
+    event.preventDefault()
+    const text = newChecklistText.trim()
+    if (!text) return
+
+    const newItem = { id: crypto.randomUUID(), text, isCompleted: false }
+    const updatedChecklist = [...(task.checklist ?? []), newItem]
+
+    setErrorMsg('')
+    db.tasks.update(task.id, { checklist: updatedChecklist }).catch((err) => {
+      console.error(err)
+      setErrorMsg("Impossible d'ajouter cet élément à la checklist.")
+    })
+    setNewChecklistText('')
   }
 
   return (
@@ -109,6 +126,27 @@ export function TaskEnrichment({ task }) {
             value={newCategoryName}
             maxLength={50}
             onChange={(event) => setNewCategoryName(event.target.value)}
+          />
+          <button type="submit" className="task-enrichment__submit">Ajouter</button>
+        </form>
+      </div>
+
+      <div className="task-enrichment__section">
+        <label htmlFor="new-checklist-input" className="task-enrichment__label">Checklist</label>
+        <form
+          className="task-enrichment__form"
+          onSubmit={addChecklistItem}
+          onPointerDown={(event) => event.stopPropagation()}
+          onPointerUp={(event) => event.stopPropagation()}
+        >
+          <input
+            id="new-checklist-input"
+            type="text"
+            className="task-enrichment__checklist-input"
+            placeholder="Ajouter un prérequis…"
+            value={newChecklistText}
+            maxLength={200}
+            onChange={(event) => setNewChecklistText(event.target.value)}
           />
           <button type="submit" className="task-enrichment__submit">Ajouter</button>
         </form>

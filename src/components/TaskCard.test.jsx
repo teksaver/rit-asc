@@ -94,4 +94,47 @@ describe('TaskCard', () => {
 
     expect(screen.queryByText('Non négociable')).not.toBeInTheDocument()
   })
+
+  it('renders checklist items with their own checkbox and toggles them independently', async () => {
+    const itemDone = { id: crypto.randomUUID(), text: 'Acheter du pain', isCompleted: true }
+    const itemTodo = { id: crypto.randomUUID(), text: 'Acheter du lait', isCompleted: false }
+    const task = await addTask({ checklist: [itemDone, itemTodo] })
+    render(<TaskCard task={task} />)
+
+    const doneCheckbox = screen.getByRole('checkbox', { name: 'Acheter du pain' })
+    const todoCheckbox = screen.getByRole('checkbox', { name: 'Acheter du lait' })
+    expect(doneCheckbox).toBeChecked()
+    expect(todoCheckbox).not.toBeChecked()
+
+    fireEvent.click(todoCheckbox)
+
+    await waitFor(async () => {
+      const updated = await db.tasks.get(task.id)
+      expect(updated.checklist.find((item) => item.id === itemTodo.id).isCompleted).toBe(true)
+      expect(updated.checklist.find((item) => item.id === itemDone.id).isCompleted).toBe(true)
+    })
+  })
+
+  it('does not toggle the parent task status when checking a checklist item', async () => {
+    const item = { id: crypto.randomUUID(), text: 'Préparer le sac', isCompleted: false }
+    const task = await addTask({ checklist: [item] })
+    render(<TaskCard task={task} />)
+
+    fireEvent.click(screen.getByRole('checkbox', { name: 'Préparer le sac' }))
+
+    await waitFor(async () => {
+      const updated = await db.tasks.get(task.id)
+      expect(updated.checklist[0].isCompleted).toBe(true)
+    })
+
+    const updated = await db.tasks.get(task.id)
+    expect(updated.status).toBe('inbox')
+  })
+
+  it('renders no checklist section when the checklist is empty', async () => {
+    const task = await addTask()
+    const { container } = render(<TaskCard task={task} />)
+
+    expect(container.querySelector('.task-card__checklist')).not.toBeInTheDocument()
+  })
 })

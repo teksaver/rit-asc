@@ -3,11 +3,20 @@ services:
     build:
       context: .
       dockerfile: .devcontainer/Dockerfile
-    user: node
     working_dir: /workspace
+    # Runs Docker's embedded tini as PID 1 so SIGTERM/SIGINT are forwarded correctly
+    # and zombie processes are reaped, instead of the shell/npm process owning PID 1.
+    # No `user:` override here: the image's own `USER node` (Dockerfile) already
+    # applies, and matches the devcontainer's `remoteUser: node` below.
+    init: true
     volumes:
       - .:/workspace
       - node_modules:/workspace/node_modules
+      # Named volume masking .git from the container: keeps git usage host-side
+      # only, and stops Vite's file watcher from ever having to look at the repo's
+      # git history. Named (not anonymous) so it's reused across recreations
+      # instead of leaking a fresh orphaned volume every time.
+      - git-dir:/workspace/.git
     ports:
       - '5173:5173'
     environment:
@@ -15,7 +24,25 @@ services:
       # filesystem; polling keeps Vite's HMR working across host platforms.
       CHOKIDAR_USEPOLLING: 'true'
       CHOKIDAR_INTERVAL: '300'
-    command: sh -c "npm install --prefer-offline --no-audit --no-fund && npm run dev -- --host 0.0.0.0"
+    # Single source of truth for container startup (devcontainer.json relies on this
+    # same command rather than starting its own copy of the dev server). Skips
+    # `npm install` when package.json/package-lock.json haven't changed since the
+    # last start. Ends with `exec` so npm/vite replaces the shell as PID 1's direct
+    # child, letting `init: true` above forward signals to it correctly.
+    command: >
+      sh -c '
+        set -e;
+        if [ ! -f package.json ]; then
+          echo "package.json introuvable dans /workspace - verifiez le montage du volume." >&2;
+          exit 1;
+        fi;
+        if [ ! -f node_modules/.install-stamp ] || ! cat package.json package-lock.json 2>/dev/null | cmp -s - node_modules/.install-stamp; then
+          npm install --prefer-offline --no-audit --no-fund;
+          cat package.json package-lock.json 2>/dev/null > node_modules/.install-stamp || true;
+        fi;
+        exec npm run dev -- --host 0.0.0.0
+      '
 
 volumes:
   node_modules:
+  git-dir:

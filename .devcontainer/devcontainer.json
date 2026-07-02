@@ -10,6 +10,11 @@
       "onAutoForward": "openBrowser"
     }
   },
-  "postStartCommand": "sh -c 'npm install --prefer-offline --no-audit --no-fund && (npm run dev -- --host 0.0.0.0 > /tmp/vite-dev.log 2>&1 &)'",
-  "remoteUser": "node"
+  "overrideCommand": false,
+  "remoteUser": "node",
+  "customizations": {
+    "vscode": {
+      "extensions": ["oxc.oxc-vscode", "vitest.explorer"]
+    }
+  }
 }

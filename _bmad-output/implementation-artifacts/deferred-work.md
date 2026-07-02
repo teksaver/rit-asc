@@ -16,3 +16,6 @@
 - Severe Host CPU Degradation via Aggressive Polling (CHOKIDAR) — Polling conservé temporairement pour assurer le HMR sur macOS
 - Brittle Base Image Versioning (`node:22-bookworm-slim` sans SHA) — Pinning strict reporté
 - Missing Container Health Observability — Healthcheck non critique pour l'instant
+- Paquets apt non épinglés (`python3 make g++`) [`.devcontainer/Dockerfile`] — reproductibilité stricte des builds non requise pour un devcontainer local solo
+- `npm install` (pas `npm ci`) sur le volume `node_modules` persistant [`docker-compose.yml`] — le volume peut dériver du lockfile dans le temps (deps supprimées non purgées) ; `npm ci` casserait le gain de vitesse `--prefer-offline`
+- Aucune politique de redémarrage en cas d'échec transitoire de `npm install` [`docker-compose.yml`] — un blip réseau fait échouer tout le conteneur (`set -e`) sans retry automatique

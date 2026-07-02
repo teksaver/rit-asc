@@ -1,0 +1,56 @@
+.task-enrichment {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md) 0 0;
+  animation: task-card-enter 0.25s ease-out;
+}
+
+.task-enrichment__section {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.task-enrichment__label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  margin: 0;
+}
+
+.task-enrichment__pills {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+}
+
+.task-enrichment__pill {
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 6px 14px;
+  min-height: 44px;
+  font-size: 14px;
+  color: var(--color-text-primary);
+  background: var(--color-muted);
+  cursor: pointer;
+  transition: box-shadow 0.2s ease;
+}
+
+.task-enrichment__pill--selected {
+  box-shadow: 0 0 0 2px var(--color-accent);
+}
+
+.task-enrichment__new-category {
+  border: 1px solid var(--color-muted);
+  border-radius: var(--radius-md);
+  padding: var(--spacing-sm);
+  font-size: 14px;
+  font-family: inherit;
+  min-height: 44px;
+}
+
+.task-enrichment__new-category:focus {
+  outline: none;
+  border-color: var(--color-accent);
+  box-shadow: 0 0 0 3px rgba(99, 102, 241, 0.15);
+}

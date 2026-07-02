@@ -9,3 +9,8 @@ db.version(1).stores({
 db.version(2).stores({
   tasks: 'id, title, status, createdAt, category, priority, categoryId, plannedDayId',
 })
+
+db.version(3).stores({
+  tasks: 'id, title, status, createdAt, category, priority, categoryId, plannedDayId',
+  categories: 'id, name',
+})

@@ -11,13 +11,56 @@
 
 .task-card {
   display: flex;
-  align-items: center;
-  gap: var(--spacing-md);
+  flex-direction: column;
+  gap: var(--spacing-sm);
   padding: var(--spacing-md);
   background: var(--color-surface);
   border-radius: var(--radius-lg);
   box-shadow: var(--shadow-card);
   animation: task-card-enter 0.3s ease-out;
+  touch-action: pan-y;
+}
+
+.task-card__row {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-md);
+}
+
+.task-card__edit-button {
+  flex-shrink: 0;
+  width: 44px;
+  height: 44px;
+  margin: calc(-1 * var(--spacing-sm));
+  border: none;
+  border-radius: var(--radius-full);
+  background: transparent;
+  color: var(--color-text-secondary);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.task-card__edit-button:hover,
+.task-card__edit-button:focus-visible {
+  background: var(--color-muted);
+}
+
+.task-card__tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  padding-left: calc(44px + var(--spacing-md));
+}
+
+.task-card__tag {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+  background: var(--color-muted);
+  border-radius: var(--radius-full);
+  padding: 2px 10px;
 }
 
 .task-card__checkbox {

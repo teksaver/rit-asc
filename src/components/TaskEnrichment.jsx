@@ -13,50 +13,56 @@ export const PRIORITY_OPTIONS = [
 
 export function TaskEnrichment({ task }) {
   const [newCategoryName, setNewCategoryName] = useState('')
-  const categories = useLiveQuery(() => db.categories.toArray(), [], [])
+  const [errorMsg, setErrorMsg] = useState('')
+  // Limitation à 100 catégories pour éviter le chargement infini
+  const categories = useLiveQuery(() => db.categories.limit(100).toArray(), [], [])
 
   const selectedPriority = task.priority ?? 'could'
 
   const setPriority = (value) => {
-    db.tasks.update(task.id, { priority: value }).catch(() => {})
+    db.tasks.update(task.id, { priority: value }).catch((err) => {
+      console.error(err)
+      setErrorMsg("Impossible de mettre à jour la priorité.")
+    })
   }
 
   const assignCategory = (categoryId) => {
-    db.tasks.update(task.id, { categoryId }).catch(() => {})
+    db.tasks.update(task.id, { categoryId }).catch((err) => {
+      console.error(err)
+      setErrorMsg("Impossible d'assigner la catégorie.")
+    })
   }
 
-  const createAndAssignCategory = async (rawName) => {
-    const name = rawName.trim()
+  const createAndAssignCategory = async (event) => {
+    event.preventDefault()
+    const name = newCategoryName.trim()
     if (!name) return
 
-    const existing = categories.find(
-      (category) => category.name.toLowerCase() === name.toLowerCase(),
-    )
-
-    if (existing) {
-      assignCategory(existing.id)
-      return
-    }
-
-    const id = crypto.randomUUID()
-    const color = PASTEL_PALETTE[categories.length % PASTEL_PALETTE.length]
-
+    setErrorMsg('')
     try {
+      const existing = await db.categories.where('name').equalsIgnoreCase(name).first()
+      if (existing) {
+        assignCategory(existing.id)
+        setNewCategoryName('')
+        return
+      }
+
+      const id = crypto.randomUUID()
+      const hash = Array.from(name).reduce((acc, char) => acc + char.charCodeAt(0), 0)
+      const color = PASTEL_PALETTE[hash % PASTEL_PALETTE.length]
+
       await db.categories.add({ id, name, color })
       assignCategory(id)
-    } catch {
-      // Création silencieusement ignorée en cas d'échec Dexie ; l'utilisateur peut réessayer.
+      setNewCategoryName('')
+    } catch (err) {
+      console.error(err)
+      setErrorMsg("Erreur lors de la création de la catégorie.")
     }
-  }
-
-  const handleNewCategoryKeyDown = (event) => {
-    if (event.key !== 'Enter') return
-    createAndAssignCategory(newCategoryName)
-    setNewCategoryName('')
   }
 
   return (
     <div className="task-enrichment">
+      {errorMsg && <div className="task-enrichment__error" role="alert">{errorMsg}</div>}
       <div className="task-enrichment__section">
         <p className="task-enrichment__label">Priorité</p>
         <div className="task-enrichment__pills" role="group" aria-label="Priorité de la tâche">
@@ -77,7 +83,7 @@ export function TaskEnrichment({ task }) {
       </div>
 
       <div className="task-enrichment__section">
-        <p className="task-enrichment__label">Catégorie</p>
+        <label htmlFor="new-category-input" className="task-enrichment__label">Catégorie</label>
         <div className="task-enrichment__pills" role="group" aria-label="Catégories existantes">
           {categories.map((category) => (
             <button
@@ -94,15 +100,18 @@ export function TaskEnrichment({ task }) {
             </button>
           ))}
         </div>
-        <input
-          type="text"
-          className="task-enrichment__new-category"
-          placeholder="Nouvelle catégorie…"
-          value={newCategoryName}
-          onChange={(event) => setNewCategoryName(event.target.value)}
-          onKeyDown={handleNewCategoryKeyDown}
-          aria-label="Créer une nouvelle catégorie"
-        />
+        <form className="task-enrichment__form" onSubmit={createAndAssignCategory}>
+          <input
+            id="new-category-input"
+            type="text"
+            className="task-enrichment__new-category"
+            placeholder="Nouvelle catégorie…"
+            value={newCategoryName}
+            maxLength={50}
+            onChange={(event) => setNewCategoryName(event.target.value)}
+          />
+          <button type="submit" className="task-enrichment__submit">Ajouter</button>
+        </form>
       </div>
     </div>
   )

@@ -53,6 +53,7 @@
   flex-wrap: wrap;
   gap: var(--spacing-sm);
   padding-left: calc(44px + var(--spacing-md));
+  animation: task-card-enter 0.3s ease-out;
 }
 
 .task-card__tag {
@@ -61,6 +62,7 @@
   background: var(--color-muted);
   border-radius: var(--radius-full);
   padding: 2px 10px;
+  transition: opacity 0.3s ease, background-color 0.3s ease;
 }
 
 .task-card__checkbox {

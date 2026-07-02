@@ -1,7 +1,12 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, beforeAll } from 'vitest'
 import { render, screen, fireEvent, waitFor } from '@testing-library/react'
 import { TaskCard } from './TaskCard'
 import { db } from '../db'
+
+beforeAll(() => {
+  window.HTMLElement.prototype.setPointerCapture = () => {}
+  window.HTMLElement.prototype.releasePointerCapture = () => {}
+})
 
 describe('TaskCard', () => {
   beforeEach(async () => {
@@ -54,8 +59,8 @@ describe('TaskCard', () => {
     const { container } = render(<TaskCard task={task} />)
 
     const card = container.querySelector('.task-card')
-    fireEvent.pointerDown(card, { clientX: 0, pointerId: 1 })
-    fireEvent.pointerUp(card, { clientX: 90, pointerId: 1 })
+    fireEvent.pointerDown(card, { clientX: 0, pointerId: 1, isPrimary: true })
+    fireEvent.pointerUp(card, { clientX: 90, pointerId: 1, isPrimary: true })
 
     expect(screen.getByText('Priorité')).toBeInTheDocument()
   })
@@ -65,8 +70,8 @@ describe('TaskCard', () => {
     const { container } = render(<TaskCard task={task} />)
 
     const card = container.querySelector('.task-card')
-    fireEvent.pointerDown(card, { clientX: 0, pointerId: 1 })
-    fireEvent.pointerUp(card, { clientX: 10, pointerId: 1 })
+    fireEvent.pointerDown(card, { clientX: 0, pointerId: 1, isPrimary: true })
+    fireEvent.pointerUp(card, { clientX: 10, pointerId: 1, isPrimary: true })
 
     expect(screen.queryByText('Priorité')).not.toBeInTheDocument()
   })
@@ -76,7 +81,8 @@ describe('TaskCard', () => {
     await db.categories.add({ id: categoryId, name: 'Maison', color: '#FDE68A' })
     const task = await addTask({ categoryId, priority: 'must' })
 
-    render(<TaskCard task={task} />)
+    const categoriesMap = { [categoryId]: { id: categoryId, name: 'Maison', color: '#FDE68A' } }
+    render(<TaskCard task={task} categoriesMap={categoriesMap} />)
 
     expect(await screen.findByText('Maison')).toBeInTheDocument()
     expect(screen.getByText('Non négociable')).toBeInTheDocument()

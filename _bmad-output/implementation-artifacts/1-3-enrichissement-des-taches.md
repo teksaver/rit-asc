@@ -4,7 +4,7 @@ baseline_commit: 3e751a98c333d062bb4268db3302875c926bb7be
 
 # Story 1.3: Enrichissement des tâches (Priorité et Catégorie)
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 
@@ -77,6 +77,29 @@ So that je prépare la tâche pour qu'elle puisse être planifiée dans ma semai
 ## Final Status Update
 
 Ultimate context engine analysis completed - comprehensive developer guide created
+
+### Review Findings
+
+- [x] [Review][Decision] Contradiction dans le style des tags de catégorie — "grisées" vs "pastel".
+- [x] [Review][Decision] Incohérence mineure dans le libellé de priorité — "Pas obligé" vs "Vraiment pas obligé".
+- [x] [Review][Patch] Swipe gesture detection is vulnerable to false positives during vertical scrolling [src/components/TaskCard.jsx]
+- [x] [Review][Patch] Secondary pointer touches card while primary active [src/components/TaskCard.jsx:229]
+- [x] [Review][Patch] Pointer released outside the card element [src/components/TaskCard.jsx:261]
+- [x] [Review][Patch] Missing Pointer Cancel Handling [src/components/TaskCard.jsx:261]
+- [x] [Review][Patch] One-way Swipe Interaction [src/components/TaskCard.jsx]
+- [x] [Review][Patch] N+1 Query Problem for Categories [src/components/TaskCard.jsx]
+- [x] [Review][Patch] Unbounded Category Fetching [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] Silenced Database Errors [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] No Visible Submit Button for Categories [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] Race Condition in Category Creation [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] Fragile Color Assignment Logic [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] Hardcoded RGB in Focus States [src/components/TaskEnrichment.css]
+- [x] [Review][Patch] Potential Accessibility Contrast Issues [src/components/TaskCard.jsx]
+- [x] [Review][Patch] Missing Form Semantics [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] User holds Enter (key repeat) [src/components/TaskEnrichment.jsx:523]
+- [x] [Review][Patch] User presses Enter to accept IME composition [src/components/TaskEnrichment.jsx:523]
+- [x] [Review][Patch] User pastes excessively long string [src/components/TaskEnrichment.jsx:567]
+- [x] [Review][Patch] Missing animation on tags appearance [src/components/TaskCard.css]
 
 ## Dev Agent Record
 

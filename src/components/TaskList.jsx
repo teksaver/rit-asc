@@ -18,6 +18,12 @@ export function TaskList() {
     undefined,
   )
 
+  const categories = useLiveQuery(() => db.categories.toArray(), [], [])
+  const categoriesMap = categories.reduce((acc, cat) => {
+    acc[cat.id] = cat
+    return acc
+  }, {})
+
   if (tasks === undefined) {
     return (
       <div className="task-list task-list--empty">
@@ -45,7 +51,7 @@ export function TaskList() {
   return (
     <ul className="task-list">
       {tasks.map((task) => (
-        <TaskCard key={task.id} task={task} />
+        <TaskCard key={task.id} task={task} categoriesMap={categoriesMap} />
       ))}
     </ul>
   )

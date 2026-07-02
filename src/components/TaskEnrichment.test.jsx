@@ -50,9 +50,9 @@ describe('TaskEnrichment', () => {
     const task = await addTask()
     render(<TaskEnrichment task={task} />)
 
-    const input = screen.getByLabelText('Créer une nouvelle catégorie')
+    const input = screen.getByLabelText('Catégorie')
     fireEvent.change(input, { target: { value: 'Maison' } })
-    fireEvent.keyDown(input, { key: 'Enter' })
+    fireEvent.submit(input.closest('form'))
 
     await waitFor(async () => {
       const categories = await db.categories.toArray()
@@ -70,9 +70,9 @@ describe('TaskEnrichment', () => {
     const task = await addTask()
     render(<TaskEnrichment task={task} />)
 
-    const input = await screen.findByLabelText('Créer une nouvelle catégorie')
+    const input = await screen.findByLabelText('Catégorie')
     fireEvent.change(input, { target: { value: 'travail' } })
-    fireEvent.keyDown(input, { key: 'Enter' })
+    fireEvent.submit(input.closest('form'))
 
     await waitFor(async () => {
       const categories = await db.categories.toArray()

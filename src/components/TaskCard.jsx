@@ -7,16 +7,14 @@ import './TaskCard.css'
 
 const SWIPE_OPEN_THRESHOLD = 60
 
-export function TaskCard({ task }) {
+export function TaskCard({ task, categoriesMap }) {
   const [isEnrichmentOpen, setIsEnrichmentOpen] = useState(false)
   const swipeStartXRef = useRef(null)
+  const swipeStartYRef = useRef(null)
 
   const isCompleted = task.status === 'completed'
 
-  const category = useLiveQuery(
-    () => (task.categoryId ? db.categories.get(task.categoryId) : undefined),
-    [task.categoryId],
-  )
+  const category = task.categoryId && categoriesMap ? categoriesMap[task.categoryId] : undefined
   const priorityLabel = PRIORITY_OPTIONS.find((option) => option.value === task.priority)?.label
 
   const toggleCompleted = () => {
@@ -29,20 +27,43 @@ export function TaskCard({ task }) {
   }
 
   const handlePointerDown = (event) => {
+    if (!event.isPrimary) return
+    event.currentTarget.setPointerCapture(event.pointerId)
     swipeStartXRef.current = event.clientX
+    swipeStartYRef.current = event.clientY
   }
 
   const handlePointerUp = (event) => {
+    if (!event.isPrimary) return
+    event.currentTarget.releasePointerCapture(event.pointerId)
     if (swipeStartXRef.current === null) return
-    const delta = event.clientX - swipeStartXRef.current
+    const deltaX = event.clientX - swipeStartXRef.current
+    const deltaY = event.clientY - swipeStartYRef.current
     swipeStartXRef.current = null
-    if (delta >= SWIPE_OPEN_THRESHOLD) {
-      setIsEnrichmentOpen(true)
+    swipeStartYRef.current = null
+    if (Math.abs(deltaY) < 30) {
+      if (deltaX >= SWIPE_OPEN_THRESHOLD) {
+        setIsEnrichmentOpen(true)
+      } else if (deltaX <= -SWIPE_OPEN_THRESHOLD && isEnrichmentOpen) {
+        setIsEnrichmentOpen(false)
+      }
     }
   }
 
+  const handlePointerCancel = (event) => {
+    if (!event.isPrimary) return
+    event.currentTarget.releasePointerCapture(event.pointerId)
+    swipeStartXRef.current = null
+    swipeStartYRef.current = null
+  }
+
   return (
-    <li className="task-card" onPointerDown={handlePointerDown} onPointerUp={handlePointerUp}>
+    <li
+      className="task-card"
+      onPointerDown={handlePointerDown}
+      onPointerUp={handlePointerUp}
+      onPointerCancel={handlePointerCancel}
+    >
       <div className="task-card__row">
         <span
           role="checkbox"
@@ -75,7 +96,10 @@ export function TaskCard({ task }) {
       {(category || priorityLabel) && (
         <div className="task-card__tags">
           {category && (
-            <span className="task-card__tag" style={{ backgroundColor: category.color }}>
+            <span
+              className="task-card__tag"
+              style={{ backgroundColor: category.color, color: 'var(--color-text-primary)' }}
+            >
               {category.name}
             </span>
           )}

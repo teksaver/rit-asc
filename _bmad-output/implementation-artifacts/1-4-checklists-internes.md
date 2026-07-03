@@ -4,7 +4,7 @@ baseline_commit: a7a3690
 
 # Story 1.4: Checklists internes (Prérequis)
 
-Status: review
+Status: done
 
 ## Story
 
@@ -111,3 +111,23 @@ Claude Sonnet 5 (dev-story workflow)
 ## Change Log
 
 - 2026-07-02 — Implémentation complète de la Story 1.4 : ajout, affichage et cochage indépendant des éléments de checklist (`TaskEnrichment` pour l'ajout, `TaskCard` pour l'affichage/cochage), sans migration de schéma Dexie. Correction d'une régression de capture de pointeur (héritée des correctifs non commités de la Story 1.3) qui bloquait les clics réels sur les éléments interactifs de la carte. Tests unitaires, lint et vérification navigateur validés. Statut passé à "review".
+
+### Review Findings
+
+- [x] [Review][Patch] Race condition in checklist updates (addChecklistItem) [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] Race condition in checklist updates (toggleChecklistItem) [src/components/TaskCard.jsx]
+- [x] [Review][Patch] Race Condition in Category Creation [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] Arbitrary Category Limit Causes Data Inaccessibility [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] Naive Hash Function for Category Colors [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] Incomplete Animation Implementation [src/components/TaskCard.css]
+- [x] [Review][Patch] Accessibility Failure on Forms [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] Potential TypeError in Event Handler [src/components/TaskCard.jsx]
+- [x] [Review][Patch] Silent Failure on State Persistence [src/components/TaskCard.jsx]
+- [x] [Review][Patch] User input permanently lost on DB failure [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] Stale error messages remain visible on empty submit [src/components/TaskEnrichment.jsx]
+- [x] [Review][Patch] InvalidPointerId DOMException on releasePointerCapture [src/components/TaskCard.jsx]
+- [x] [Review][Patch] Unintended card swipe while interacting with category form gaps [src/components/TaskEnrichment.jsx]
+- [x] [Review][Defer] Flawed Checksum Logic in Docker Compose [docker-compose.yml] — deferred, pre-existing
+- [x] [Review][Defer] Invalid VS Code Extension ID [.devcontainer/devcontainer.json] — deferred, pre-existing
+- [x] [Review][Defer] Performance Degradation via Unmemoized Prop Generation [src/components/TaskList.jsx] — deferred, pre-existing
+

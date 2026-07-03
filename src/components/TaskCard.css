@@ -114,11 +114,11 @@
   padding-left: calc(44px + var(--spacing-md));
   margin: 0;
   list-style: none;
-  animation: task-card-enter 0.3s ease-out;
 }
 
 .task-card__checklist-item {
   display: flex;
+  animation: task-card-enter 0.3s ease-out;
 }
 
 .task-card__checklist-label {

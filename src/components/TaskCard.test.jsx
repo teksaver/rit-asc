@@ -6,6 +6,7 @@ import { db } from '../db'
 beforeAll(() => {
   window.HTMLElement.prototype.setPointerCapture = () => {}
   window.HTMLElement.prototype.releasePointerCapture = () => {}
+  window.HTMLElement.prototype.hasPointerCapture = () => true
 })
 
 describe('TaskCard', () => {

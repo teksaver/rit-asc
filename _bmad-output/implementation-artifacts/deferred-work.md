@@ -19,3 +19,9 @@
 - Paquets apt non épinglés (`python3 make g++`) [`.devcontainer/Dockerfile`] — reproductibilité stricte des builds non requise pour un devcontainer local solo
 - `npm install` (pas `npm ci`) sur le volume `node_modules` persistant [`docker-compose.yml`] — le volume peut dériver du lockfile dans le temps (deps supprimées non purgées) ; `npm ci` casserait le gain de vitesse `--prefer-offline`
 - Aucune politique de redémarrage en cas d'échec transitoire de `npm install` [`docker-compose.yml`] — un blip réseau fait échouer tout le conteneur (`set -e`) sans retry automatique
+
+## Deferred from: code review of 1-4-checklists-internes.md (2026-07-02)
+
+- Flawed Checksum Logic in Docker Compose: Concatenating package.json and package-lock.json directly into cmp without delimiters.
+- Invalid VS Code Extension ID: devcontainer recommends "vitest.explorer" instead of "ZixuanChen.vitest-explorer".
+- Performance Degradation via Unmemoized Prop Generation: TaskList rebuilds categoriesMap using reduce on every single render.

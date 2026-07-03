@@ -15,8 +15,7 @@ export function TaskEnrichment({ task }) {
   const [newCategoryName, setNewCategoryName] = useState('')
   const [newChecklistText, setNewChecklistText] = useState('')
   const [errorMsg, setErrorMsg] = useState('')
-  // Limitation à 100 catégories pour éviter le chargement infini
-  const categories = useLiveQuery(() => db.categories.limit(100).toArray(), [], [])
+  const categories = useLiveQuery(() => db.categories.toArray(), [], [])
 
   const selectedPriority = task.priority ?? 'could'
 
@@ -37,23 +36,30 @@ export function TaskEnrichment({ task }) {
   const createAndAssignCategory = async (event) => {
     event.preventDefault()
     const name = newCategoryName.trim()
-    if (!name) return
+    if (!name) {
+      setErrorMsg('')
+      return
+    }
 
     setErrorMsg('')
     try {
-      const existing = await db.categories.where('name').equalsIgnoreCase(name).first()
-      if (existing) {
-        assignCategory(existing.id)
-        setNewCategoryName('')
-        return
-      }
-
-      const id = crypto.randomUUID()
-      const hash = Array.from(name).reduce((acc, char) => acc + char.charCodeAt(0), 0)
-      const color = PASTEL_PALETTE[hash % PASTEL_PALETTE.length]
-
-      await db.categories.add({ id, name, color })
-      assignCategory(id)
+      await db.transaction('rw', db.categories, db.tasks, async () => {
+        let categoryId
+        const existing = await db.categories.where('name').equalsIgnoreCase(name).first()
+        if (existing) {
+          categoryId = existing.id
+        } else {
+          categoryId = crypto.randomUUID()
+          let hash = 0
+          for (let i = 0; i < name.length; i++) {
+            hash = (hash << 5) - hash + name.charCodeAt(i)
+            hash |= 0
+          }
+          const color = PASTEL_PALETTE[Math.abs(hash) % PASTEL_PALETTE.length]
+          await db.categories.add({ id: categoryId, name, color })
+        }
+        await db.tasks.update(task.id, { categoryId })
+      })
       setNewCategoryName('')
     } catch (err) {
       console.error(err)
@@ -61,20 +67,29 @@ export function TaskEnrichment({ task }) {
     }
   }
 
-  const addChecklistItem = (event) => {
+  const addChecklistItem = async (event) => {
     event.preventDefault()
     const text = newChecklistText.trim()
-    if (!text) return
-
-    const newItem = { id: crypto.randomUUID(), text, isCompleted: false }
-    const updatedChecklist = [...(task.checklist ?? []), newItem]
+    if (!text) {
+      setErrorMsg('')
+      return
+    }
 
     setErrorMsg('')
-    db.tasks.update(task.id, { checklist: updatedChecklist }).catch((err) => {
+    const newItem = { id: crypto.randomUUID(), text, isCompleted: false }
+
+    try {
+      await db.transaction('rw', db.tasks, async () => {
+        const currentTask = await db.tasks.get(task.id)
+        if (!currentTask) throw new Error("Tâche introuvable")
+        const updatedChecklist = [...(currentTask.checklist ?? []), newItem]
+        await db.tasks.update(task.id, { checklist: updatedChecklist })
+      })
+      setNewChecklistText('')
+    } catch (err) {
       console.error(err)
       setErrorMsg("Impossible d'ajouter cet élément à la checklist.")
-    })
-    setNewChecklistText('')
+    }
   }
 
   return (
@@ -117,7 +132,13 @@ export function TaskEnrichment({ task }) {
             </button>
           ))}
         </div>
-        <form className="task-enrichment__form" onSubmit={createAndAssignCategory}>
+        <form 
+          className="task-enrichment__form" 
+          aria-label="Ajouter une catégorie" 
+          onSubmit={createAndAssignCategory}
+          onPointerDown={(event) => event.stopPropagation()}
+          onPointerUp={(event) => event.stopPropagation()}
+        >
           <input
             id="new-category-input"
             type="text"
@@ -135,6 +156,7 @@ export function TaskEnrichment({ task }) {
         <label htmlFor="new-checklist-input" className="task-enrichment__label">Checklist</label>
         <form
           className="task-enrichment__form"
+          aria-label="Ajouter un élément à la checklist"
           onSubmit={addChecklistItem}
           onPointerDown={(event) => event.stopPropagation()}
           onPointerUp={(event) => event.stopPropagation()}

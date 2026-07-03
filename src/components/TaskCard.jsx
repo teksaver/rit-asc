@@ -25,17 +25,25 @@ export function TaskCard({ task, categoriesMap }) {
       })
   }
 
-  const toggleChecklistItem = (itemId) => {
-    const updatedChecklist = (task.checklist ?? []).map((item) =>
-      item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item,
-    )
-    db.tasks.update(task.id, { checklist: updatedChecklist }).catch(() => {
-      // Échec silencieux tolérable, comme pour le statut de la tâche ci-dessus.
-    })
+  const toggleChecklistItem = async (itemId) => {
+    try {
+      await db.transaction('rw', db.tasks, async () => {
+        const currentTask = await db.tasks.get(task.id)
+        if (!currentTask) return
+        const updatedChecklist = (currentTask.checklist ?? []).map((item) =>
+          item.id === itemId ? { ...item, isCompleted: !item.isCompleted } : item,
+        )
+        await db.tasks.update(task.id, { checklist: updatedChecklist })
+      })
+    } catch (err) {
+      console.error(err)
+    }
   }
 
-  const isInteractiveTarget = (event) =>
-    event.target.closest('button, input, a, label, [role="checkbox"], [role="button"]')
+  const isInteractiveTarget = (event) => {
+    const target = event.target.nodeType === 3 ? event.target.parentNode : event.target
+    return target?.closest('button, input, a, label, [role="checkbox"], [role="button"]')
+  }
 
   const handlePointerDown = (event) => {
     if (!event.isPrimary || isInteractiveTarget(event)) return
@@ -47,7 +55,9 @@ export function TaskCard({ task, categoriesMap }) {
   const handlePointerUp = (event) => {
     if (!event.isPrimary) return
     if (swipeStartXRef.current === null) return
-    event.currentTarget.releasePointerCapture(event.pointerId)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
     const deltaX = event.clientX - swipeStartXRef.current
     const deltaY = event.clientY - swipeStartYRef.current
     swipeStartXRef.current = null
@@ -63,7 +73,9 @@ export function TaskCard({ task, categoriesMap }) {
 
   const handlePointerCancel = (event) => {
     if (!event.isPrimary || swipeStartXRef.current === null) return
-    event.currentTarget.releasePointerCapture(event.pointerId)
+    if (event.currentTarget.hasPointerCapture(event.pointerId)) {
+      event.currentTarget.releasePointerCapture(event.pointerId)
+    }
     swipeStartXRef.current = null
     swipeStartYRef.current = null
   }

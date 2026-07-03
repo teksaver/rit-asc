@@ -4,7 +4,7 @@ baseline_commit: NO_VCS
 
 # Story 1.1: Saisie "Mitraillette" de Tâches Simples (Le Dépôt)
 
-Status: review
+Status: done
 
 <!-- Note: Validation is optional. Run validate-create-story for quality check before dev-story. -->
 

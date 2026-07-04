@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react'
-import { db } from '../db'
+import { db, UNASSIGNED_PLANNED_DAY_ID } from '../db'
 import './ProgressiveInput.css'
 
 export function ProgressiveInput() {
@@ -34,7 +34,7 @@ export function ProgressiveInput() {
         category: null,
         priority: null,
         categoryId: null,
-        plannedDayId: null,
+        plannedDayId: UNASSIGNED_PLANNED_DAY_ID,
         checklist: [],
       })
       .catch(() => {

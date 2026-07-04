@@ -114,4 +114,71 @@ describe('db', () => {
     })
     expect(timeBlock.id).toMatch(UUID_V4_REGEX)
   })
+
+  it('lets a task reference a timeBlock via timeBlockId', async () => {
+    await db.dayTemplates.clear()
+    await db.timeBlocks.clear()
+
+    const dayTemplateId = crypto.randomUUID()
+    await db.dayTemplates.add({ id: dayTemplateId, name: 'Télétravail' })
+
+    const timeBlockId = crypto.randomUUID()
+    await db.timeBlocks.add({
+      id: timeBlockId,
+      dayTemplateId,
+      categoryId: null,
+      startTime: '09:00',
+      endTime: '12:00',
+    })
+
+    const taskId = crypto.randomUUID()
+    await db.tasks.add({
+      id: taskId,
+      title: 'Préparer le rapport',
+      status: 'inbox',
+      createdAt: new Date().toISOString(),
+      category: null,
+      priority: null,
+      categoryId: null,
+      plannedDayId: null,
+      timeBlockId,
+      checklist: [],
+    })
+
+    const task = await db.tasks.get(taskId)
+    expect(task.timeBlockId).toBe(timeBlockId)
+  })
+
+  it('exposes a plannedDays table linked to a dayTemplate for a given date', async () => {
+    await db.dayTemplates.clear()
+    await db.plannedDays.clear()
+
+    const dayTemplateId = crypto.randomUUID()
+    await db.dayTemplates.add({ id: dayTemplateId, name: 'Télétravail' })
+
+    const plannedDayId = crypto.randomUUID()
+    await db.plannedDays.add({ id: plannedDayId, date: '2026-07-06', dayTemplateId })
+
+    const plannedDay = await db.plannedDays.get(plannedDayId)
+
+    expect(plannedDay).toMatchObject({
+      id: plannedDayId,
+      date: '2026-07-06',
+      dayTemplateId,
+    })
+    expect(plannedDay.id).toMatch(UUID_V4_REGEX)
+  })
+
+  it('rejects a second plannedDay for a date that is already planned', async () => {
+    await db.dayTemplates.clear()
+    await db.plannedDays.clear()
+
+    const dayTemplateId = crypto.randomUUID()
+    await db.dayTemplates.add({ id: dayTemplateId, name: 'Télétravail' })
+    await db.plannedDays.add({ id: crypto.randomUUID(), date: '2026-07-06', dayTemplateId })
+
+    await expect(
+      db.plannedDays.add({ id: crypto.randomUUID(), date: '2026-07-06', dayTemplateId }),
+    ).rejects.toThrow()
+  })
 })

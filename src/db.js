@@ -14,3 +14,10 @@ db.version(3).stores({
   tasks: 'id, title, status, createdAt, category, priority, categoryId, plannedDayId',
   categories: 'id, name',
 })
+
+db.version(4).stores({
+  tasks: 'id, title, status, createdAt, category, priority, categoryId, plannedDayId',
+  categories: 'id, name',
+  dayTemplates: 'id, name',
+  timeBlocks: 'id, dayTemplateId, categoryId, startTime, endTime',
+})

@@ -71,4 +71,47 @@ describe('db', () => {
     const task = await db.tasks.get(taskId)
     expect(task.categoryId).toBe(categoryId)
   })
+
+  it('exposes a dayTemplates table with UUID v4 ids and a name', async () => {
+    await db.dayTemplates.clear()
+
+    const id = crypto.randomUUID()
+    await db.dayTemplates.add({ id, name: 'Télétravail' })
+
+    const dayTemplate = await db.dayTemplates.get(id)
+
+    expect(dayTemplate).toMatchObject({ id, name: 'Télétravail' })
+    expect(dayTemplate.id).toMatch(UUID_V4_REGEX)
+  })
+
+  it('exposes a timeBlocks table linked to a dayTemplate and a category', async () => {
+    await db.dayTemplates.clear()
+    await db.timeBlocks.clear()
+
+    const dayTemplateId = crypto.randomUUID()
+    await db.dayTemplates.add({ id: dayTemplateId, name: 'Télétravail' })
+
+    const categoryId = crypto.randomUUID()
+    await db.categories.add({ id: categoryId, name: 'Travail', color: '#BFDBFE' })
+
+    const timeBlockId = crypto.randomUUID()
+    await db.timeBlocks.add({
+      id: timeBlockId,
+      dayTemplateId,
+      categoryId,
+      startTime: '09:00',
+      endTime: '12:00',
+    })
+
+    const timeBlock = await db.timeBlocks.get(timeBlockId)
+
+    expect(timeBlock).toMatchObject({
+      id: timeBlockId,
+      dayTemplateId,
+      categoryId,
+      startTime: '09:00',
+      endTime: '12:00',
+    })
+    expect(timeBlock.id).toMatch(UUID_V4_REGEX)
+  })
 })

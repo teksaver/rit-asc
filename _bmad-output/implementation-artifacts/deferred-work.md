@@ -25,3 +25,7 @@
 - Flawed Checksum Logic in Docker Compose: Concatenating package.json and package-lock.json directly into cmp without delimiters.
 - Invalid VS Code Extension ID: devcontainer recommends "vitest.explorer" instead of "ZixuanChen.vitest-explorer".
 - Performance Degradation via Unmemoized Prop Generation: TaskList rebuilds categoriesMap using reduce on every single render.
+
+## Deferred from: test manuel de l'Epic 1 (checkpoint review, 2026-07-04)
+
+- Confusion visuelle entre la case "terminer la tâche" (`task-card__checkbox`, le grand cercle à gauche du titre) et les cases de checklist juste en dessous [`src/components/TaskCard.jsx`, `src/components/TaskCard.css`] — repéré en testant manuellement l'Epic 1 : plusieurs tâches ont été marquées `completed` par erreur (clic sur le mauvais cercle), les faisant disparaître instantanément et irréversiblement de la liste "Dépôt" (pas de vue "terminé", pas d'annulation). Pas une perte de données (la tâche reste en base, juste plus affichée), mais un vrai risque UX tant que les deux cases ne sont pas plus distinctes visuellement ou que l'action n'a pas de filet de rattrapage.

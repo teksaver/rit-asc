@@ -1,6 +1,7 @@
-import { describe, it, expect, beforeEach } from 'vitest'
+import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import App from './App'
+import { db } from './db'
 
 describe('App', () => {
   beforeEach(() => {
@@ -9,6 +10,10 @@ describe('App', () => {
     // previous tests in this file.
     window.location.hash = '#/__test-reset__'
     window.location.hash = ''
+  })
+
+  afterEach(() => {
+    vi.restoreAllMocks()
   })
 
   it("shows the Aujourd'hui view by default", () => {
@@ -61,5 +66,20 @@ describe('App', () => {
 
     expect(screen.getByRole('heading', { name: 'Page introuvable' })).toBeInTheDocument()
     expect(screen.queryByRole('heading', { name: "Aujourd'hui" })).not.toBeInTheDocument()
+  })
+
+  it('shows a recovery screen with a reset action when the database fails to open', async () => {
+    vi.spyOn(db, 'open').mockRejectedValueOnce(new Error('simulated upgrade failure'))
+
+    render(<App />)
+
+    expect(
+      await screen.findByRole('heading', { name: /vos données n'ont pas pu être ouvertes/i }),
+    ).toBeInTheDocument()
+    expect(
+      screen.getByRole('button', { name: /réinitialiser les données/i }),
+    ).toBeInTheDocument()
+    // The normal navigation must NOT render on top of the fatal-error screen.
+    expect(screen.queryByRole('navigation', { name: 'Navigation principale' })).not.toBeInTheDocument()
   })
 })

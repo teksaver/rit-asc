@@ -36,13 +36,35 @@ db.version(5).stores({
   plannedDays: 'id, date, dayTemplateId',
 })
 
-db.version(6).stores({
-  tasks: 'id, title, status, createdAt, category, priority, categoryId, plannedDayId',
-  categories: 'id, name',
-  dayTemplates: 'id, name',
-  timeBlocks: 'id, dayTemplateId, categoryId, startTime, endTime',
-  plannedDays: 'id, &date, dayTemplateId',
-})
+// plannedDays.date becomes UNIQUE in v7 (below). v6 first removes any duplicate
+// dates a pre-v6 database might hold — because Dexie applies a version's index
+// diff (and IndexedDB builds/validates the unique index) BEFORE running that
+// version's .upgrade() callback. Deduplicating in the SAME version as `&date`
+// would run too late: the unique index build would already have aborted the
+// open with a ConstraintError, leaving the database unopenable. The dedupe must
+// therefore live in the version *before* the one that adds the constraint.
+// See src/db.migrations.test.js for the executable proof of this ordering.
+db.version(6)
+  .stores({
+    tasks: 'id, title, status, createdAt, category, priority, categoryId, plannedDayId',
+    categories: 'id, name',
+    dayTemplates: 'id, name',
+    timeBlocks: 'id, dayTemplateId, categoryId, startTime, endTime',
+    plannedDays: 'id, date, dayTemplateId',
+  })
+  .upgrade(async (tx) => {
+    const seenDates = new Set()
+    await tx
+      .table('plannedDays')
+      .toCollection()
+      .modify((plannedDay, ref) => {
+        if (seenDates.has(plannedDay.date)) {
+          delete ref.value
+        } else {
+          seenDates.add(plannedDay.date)
+        }
+      })
+  })
 
 db.version(7).stores({
   tasks: 'id, title, status, createdAt, category, priority, categoryId, plannedDayId, timeBlockId',
@@ -71,3 +93,17 @@ db.version(8)
         }
       })
   })
+
+// Last-resort recovery for a database that cannot be opened (e.g. a corrupted
+// store or a migration that aborted). Deletes the local database and reloads so
+// it is recreated from scratch at the current schema version. Data is lost, but
+// the app is never left permanently stuck on a blank screen with no way out.
+export async function resetDatabase() {
+  try {
+    db.close()
+  } catch {
+    // ignore — closing a database that never opened is fine
+  }
+  await db.delete()
+  window.location.reload()
+}

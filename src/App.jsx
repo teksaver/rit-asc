@@ -4,6 +4,7 @@ import { TaskList } from './components/TaskList'
 import { ConfigurationView } from './components/ConfigurationView'
 import { PlanningView } from './components/PlanningView'
 import { TodayView } from './components/TodayView'
+import { db, resetDatabase } from './db'
 import './App.css'
 
 function cx(...classes) {
@@ -20,11 +21,30 @@ function viewFromHash(hash) {
 
 function App() {
   const [view, setView] = useState(() => viewFromHash(window.location.hash))
+  // 'opening' → 'ready' | 'error'. Gating the app on an explicit db.open() means
+  // a failed open (e.g. an aborted migration) surfaces a recovery screen instead
+  // of leaving every useLiveQuery hanging silently on a blank page.
+  const [dbState, setDbState] = useState('opening')
 
   useEffect(() => {
     const handleHashChange = () => setView(viewFromHash(window.location.hash))
     window.addEventListener('hashchange', handleHashChange)
     return () => window.removeEventListener('hashchange', handleHashChange)
+  }, [])
+
+  useEffect(() => {
+    let cancelled = false
+    db.open()
+      .then(() => {
+        if (!cancelled) setDbState('ready')
+      })
+      .catch((err) => {
+        console.error(err)
+        if (!cancelled) setDbState('error')
+      })
+    return () => {
+      cancelled = true
+    }
   }, [])
 
   const navigate = (nextView) => {
@@ -46,6 +66,26 @@ function App() {
     configuration: 'Configuration',
     planification: 'Planification',
     introuvable: 'Page introuvable',
+  }
+
+  if (dbState === 'error') {
+    return (
+      <div className="app app--db-error">
+        <div className="app__db-error" role="alert">
+          <h1 className="app__db-error-title">Vos données n'ont pas pu être ouvertes</h1>
+          <p className="app__db-error-text">
+            La base de données locale de votre navigateur n'a pas pu être chargée. Vous pouvez la
+            réinitialiser pour repartir sur une base saine.
+          </p>
+          <p className="app__db-error-text app__db-error-warning">
+            Attention : cette action efface les données enregistrées sur cet appareil.
+          </p>
+          <button type="button" className="app__db-error-button" onClick={resetDatabase}>
+            Réinitialiser les données
+          </button>
+        </div>
+      </div>
+    )
   }
 
   return (

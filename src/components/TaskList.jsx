@@ -1,5 +1,5 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db } from '../db'
+import { db, UNASSIGNED_PLANNED_DAY_ID } from '../db'
 import { TaskCard } from './TaskCard'
 import './TaskList.css'
 
@@ -7,8 +7,8 @@ export function TaskList() {
   const tasks = useLiveQuery(
     () =>
       db.tasks
-        .where('status')
-        .equals('inbox')
+        .where('[status+plannedDayId]')
+        .equals(['inbox', UNASSIGNED_PLANNED_DAY_ID])
         .toArray()
         .then((results) =>
           results.sort((a, b) => (a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0)),

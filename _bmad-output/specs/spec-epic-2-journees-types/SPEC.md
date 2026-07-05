@@ -39,6 +39,8 @@ L'utilisateur souffre de la fragmentation de ses outils et de l'effort cognitif 
 - Le stockage local IndexedDB ne doit jamais être inondé par une génération infinie ou automatique de jours dans le futur (AR4). La structure n'est créée qu'à l'assignation explicite ou à la duplication.
 - L'interface doit respecter les règles d'accessibilité (cibles tactiles >= 44x44px, état `:focus-visible` obligatoire) et la palette "Zen" (sans rouge d'alerte).
 - Toute mutation en base de données Dexie.js doit être englobée d'un `try/catch` avec gestion de l'état de soumission (`isSubmitting`) pour empêcher les doublons liés aux saisies très rapides.
+- **Tâches minimalistes (AD-4) :** Le temps n'est structuré que par les Plages Horaires (`TIME_BLOCK`) ; l'entité `TASK` ne porte explicitement aucune notion de durée, de récurrence ou d'heure limite.
+- **Robustesse des interactions tactiles :** S'assurer que la gestion des événements de pointeur (pointeur capture pour swipe/drag ultérieurs) n'interfère pas avec les clics standards de l'interface (boutons, formulaires d'édition).
 
 ## Non-goals
 

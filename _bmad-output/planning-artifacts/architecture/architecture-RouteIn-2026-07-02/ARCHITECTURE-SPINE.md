@@ -37,6 +37,16 @@ L'application est exécutée entièrement dans le navigateur du client sans aucu
 - **Prevents:** La perte silencieuse de tâches ou le plantage du moteur lorsqu'une catégorie n'est plus planifiée dans le calendrier.
 - **Rule:** Lors du report automatique d'une tâche, si le système ne trouve aucun `TimeBlock` (Plage horaire) correspondant à la catégorie de la tâche dans les `PlannedDay` futurs existants, la tâche est immédiatement réassignée au statut "Dépôt" (Inbox) et détachée du calendrier.
 
+### AD-4 — Tâches Minimalistes (Pas de gestion du temps intra-tâche)
+- **Binds:** Modèle de données de la Tâche (`TASK`).
+- **Prevents:** La création d'un moteur de récurrence complexe ou d'un gestionnaire d'échéances anxiogène qui contredirait l'amnésie bienveillante.
+- **Rule:** L'entité `TASK` ne contient intentionnellement aucun champ `duration`, `dueTime`, ou `recurrence`. La notion de temps n'existe qu'au niveau des conteneurs (`TIME_BLOCK`), les tâches elles-mêmes sont intemporelles.
+
+### AD-5 — Migrations de schéma versionnées et récupérables
+- **Binds:** Couche de stockage Dexie (versions `db.version(n)`) et amorçage de l'application.
+- **Prevents:** Une base locale rendue définitivement illisible par une migration qui échoue (typiquement un index unique posé sur des données non conformes), laissant l'application bloquée sans recours sur un écran vide.
+- **Rule:** Les migrations Dexie sont versionnées et additives — on ne réécrit jamais le sens d'une version déjà livrée. Une contrainte d'unicité (`&index`) et le nettoyage de données qui la rend satisfiable doivent vivre dans **deux versions consécutives distinctes** (nettoyage en version N, `&index` en N+1) : Dexie construit et valide l'index **avant** d'exécuter le `.upgrade()` de la même version, donc un nettoyage placé dans la même version que la contrainte s'exécuterait trop tard. L'amorçage gâte explicitement sur `db.open()` ; tout échec d'ouverture affiche un écran de récupération permettant de réinitialiser la base locale, afin qu'aucune migration avortée ne bloque l'application silencieusement.
+
 ## Consistency Conventions
 
 | Concern | Convention |
@@ -49,8 +59,8 @@ L'application est exécutée entièrement dans le navigateur du client sans aucu
 
 | Name | Version |
 | --- | --- |
-| Vite | 5.x |
-| React | 18.x |
+| Vite | 8.x |
+| React | 19.x |
 | Dexie.js | 4.x |
 | vite-plugin-pwa | 0.x |
 | Vanilla CSS | N/A |
@@ -107,5 +117,6 @@ erDiagram
 
 ## Deferred
 
-- **Stratégie de migration de schéma (Dexie Migrations) :** Repoussé. En cas de mise à jour future, l'export/import JSON permettra de by-passer les scripts de migration complexes.
+- **Intégration `vite-plugin-pwa` (Manifest & Service Worker) :** Bien que l'application soit conçue comme une PWA (Local-first), l'implémentation formelle du manifest web et du Service Worker (pour l'installabilité et le cache des assets hors-ligne) est repoussée à la fin du projet (Epic 4 ou ultérieur) afin de se concentrer d'abord sur la logique métier.
+- **Stratégie de migration de schéma (Dexie Migrations) :** ~~Repoussé~~ → **Promue hors de « Deferred » depuis Epic 2**, voir l'invariant **AD-5**. Les migrations Dexie versionnées sont désormais actives (plusieurs versions avec `.upgrade()` de nettoyage). L'export/import JSON reste un filet de sécurité complémentaire, pas un substitut aux migrations.
 - **Service Worker pour Push Notifications locales :** L'UI réactive suffit pour le moment ; le système de notifications Push natives est repoussé à une v2 pour limiter la complexité de lancement.

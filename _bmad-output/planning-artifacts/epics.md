@@ -167,7 +167,8 @@ So that je définis des routines réutilisables qui structurent mon temps.
 **Given** je suis dans la vue Configuration
 **When** je crée un modèle de journée
 **Then** je peux y ajouter plusieurs plages horaires en définissant l'Heure de début, l'Heure de fin, et la Catégorie
-**And** les plages horaires s'affichent sous forme de conteneurs visuels (UX-DR3).
+**And** les plages horaires s'affichent sous forme de conteneurs visuels (UX-DR3)
+**And** le système empêche les erreurs de saisie (heure de fin antérieure au début) et signale les chevauchements de plages horaires.
 
 ### Story 2.2: Planification d'une Semaine et Duplication
 
@@ -180,6 +181,7 @@ So that mes routines deviennent un plan d'action réel.
 **Given** je suis sur la vue de planification
 **When** j'assigne une journée type à une date (ex: Lundi)
 **Then** le système génère la structure de la journée pour cette date exacte en base locale
+**And** si une journée était déjà planifiée à cette date, le système demande confirmation avant d'écraser l'existante
 **And** je peux utiliser un bouton pour dupliquer l'organisation de la semaine en cours sur la semaine suivante (FR13).
 
 ### Story 2.3: Vue Aujourd'hui et Peuplement Initial (Onboarding)
@@ -192,7 +194,8 @@ So that je sais quoi faire sans avoir l'angoisse de la page blanche.
 
 **Given** j'ouvre l'application pour la toute première fois
 **Then** le système génère silencieusement un modèle "Journée Standard" et l'assigne à la date d'aujourd'hui (UX-DR6)
-**And** la vue "Aujourd'hui" affiche les plages horaires prêtes à recevoir des tâches de l'Inbox (FR11).
+**And** la vue "Aujourd'hui" affiche les plages horaires prêtes à recevoir des tâches de l'Inbox (FR11) via une sélection manuelle basique (bouton d'affectation) en attendant l'Epic 3
+**And** les jours suivants, cette vue affiche la journée planifiée courante ou invite clairement à planifier si aucune n'existe.
 
 ## Epic 3: Le Moteur d'Amnésie Bienveillante
 
@@ -209,6 +212,7 @@ So that je m'engage facilement à accomplir ces tâches aujourd'hui.
 **Given** je vois ma vue "Aujourd'hui"
 **When** je maintiens une tâche de l'Inbox et la lâche dans une plage horaire
 **Then** la tâche s'attache à cette plage (FR14)
+**And** si le dépôt (drop) est invalide ou hors cible, la tâche reprend sa place initiale
 **And** je peux la faire glisser vers la gauche (Swipe-to-edit) pour l'annuler et la renvoyer au Dépôt.
 
 ### Story 3.2: Le Saut de Cycle (Amnésie Bienveillante)
@@ -262,8 +266,8 @@ So that je ne perds pas de temps à chercher quoi faire.
 
 **Given** une plage horaire est en cours et n'est pas remplie
 **When** je clique sur le bouton "Que pourrais-je faire ?"
-**Then** le système analyse les tâches de l'Inbox qui partagent la même catégorie que la plage actuelle
-**And** il m'en suggère une ou plusieurs (FR10).
+**Then** le système analyse les tâches de l'Inbox
+**And** il me suggère des tâches en filtrant par la catégorie de la plage, mais aussi en priorisant selon la priorité de la tâche et son état de préparation (checklist complète) (FR10).
 
 ### Story 4.3: Sécurité et Sauvegarde (Import/Export JSON)
 
@@ -277,3 +281,15 @@ So that je ne perds jamais mon organisation.
 **When** je clique sur "Sauvegarder"
 **Then** le système génère un fichier `.json` de l'intégralité de la base IndexedDB (NFR4)
 **And** quand j'utilise la fonction "Restaurer" avec un fichier `.json` valide, alors la base est remplacée par le contenu du fichier.
+
+### Story 4.4: Intégration PWA et Hors-ligne
+
+As a Utilisateur Mobile,
+I want pouvoir installer l'application sur mon écran d'accueil et l'utiliser hors-ligne,
+So that j'y accède comme à une application native, même dans les transports.
+
+**Acceptance Criteria:**
+
+**Given** je visite l'URL de l'application via mon navigateur
+**Then** un manifeste PWA valide est détecté, permettant l'installation ("Add to Home Screen")
+**And** un Service Worker (via `vite-plugin-pwa`) met en cache les assets statiques pour que l'application s'ouvre même sans connexion réseau (NFR1).

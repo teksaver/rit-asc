@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>BMad Forge Report: Synchro Multi-Appareils</title>
+<style>
+  :root { --bg: #0f172a; --text: #f8fafc; --accent: #3b82f6; --kill: #ef4444; --lock: #10b981; }
+  body { font-family: system-ui, -apple-system, sans-serif; background: var(--bg); color: var(--text); line-height: 1.6; max-width: 800px; margin: 0 auto; padding: 2rem; }
+  .header { display: flex; justify-content: space-between; align-items: flex-start; border-bottom: 1px solid #334155; padding-bottom: 2rem; margin-bottom: 2rem; }
+  h1 { margin: 0; font-size: 2.5rem; color: #fff; }
+  .subtitle { color: #94a3b8; font-size: 1.1rem; margin-top: 0.5rem; }
+  
+  /* Wax Seal SVG CSS */
+  .seal-container { position: relative; width: 120px; height: 120px; }
+  .seal { fill: var(--lock); filter: drop-shadow(0 4px 6px rgba(0,0,0,0.5)); transform: rotate(-5deg); }
+  .seal-text { fill: #0f172a; font-weight: 900; font-size: 20px; font-family: 'Impact', sans-serif; text-anchor: middle; dominant-baseline: middle; text-transform: uppercase; letter-spacing: 1px;}
+  
+  .section-title { font-size: 1.5rem; color: var(--accent); margin-top: 2rem; margin-bottom: 1rem; border-bottom: 1px dashed #334155; padding-bottom: 0.5rem; }
+  .item { background: #1e293b; padding: 1.5rem; border-radius: 8px; margin-bottom: 1rem; border-left: 4px solid #334155; }
+  .item.lock { border-left-color: var(--lock); }
+  .item.kill { border-left-color: var(--kill); }
+  .badge { display: inline-block; padding: 0.25rem 0.5rem; border-radius: 4px; font-size: 0.75rem; font-weight: bold; margin-bottom: 0.5rem; text-transform: uppercase; }
+  .badge.lock { background: rgba(16, 185, 129, 0.2); color: var(--lock); }
+  .badge.kill { background: rgba(239, 68, 68, 0.2); color: var(--kill); }
+  
+  .personas { display: flex; gap: 1rem; flex-wrap: wrap; margin-top: 2rem; }
+  .persona { background: #1e293b; padding: 1rem; border-radius: 8px; display: flex; align-items: center; gap: 1rem; flex: 1; min-width: 200px; }
+  .persona-icon { font-size: 2rem; }
+  .persona-details h4 { margin: 0; color: #fff; }
+  .persona-details p { margin: 0; font-size: 0.85rem; color: #94a3b8; }
+</style>
+</head>
+<body>
+
+<div class="header">
+  <div>
+    <h1>Forge Verdict</h1>
+    <div class="subtitle">Idea: Synchro P2P (Bluetooth) entre 2 appareils</div>
+    <div class="subtitle" style="font-size: 0.9rem; margin-top: 1rem;">L'idée a survécu en se débarrassant de sa dette technique pour se recentrer sur l'essentiel.</div>
+  </div>
+  <div class="seal-container">
+    <svg viewBox="0 0 100 100" class="seal">
+      <path d="M50 5 C60 10, 75 5, 85 15 C95 25, 90 40, 95 50 C90 60, 95 75, 85 85 C75 95, 60 90, 50 95 C40 90, 25 95, 15 85 C5 75, 10 60, 5 50 C10 40, 5 25, 15 15 C25 5, 40 10, 50 5 Z" />
+      <circle cx="50" cy="50" r="35" fill="none" stroke="#0f172a" stroke-width="2" stroke-dasharray="4 4"/>
+      <text x="50" y="52" class="seal-text">HARDENED</text>
+    </svg>
+  </div>
+</div>
+
+<h2 class="section-title">The Residue (Load-Bearing Locks)</h2>
+
+<div class="item lock">
+  <div class="badge lock">Lock</div>
+  <strong>Le besoin est personnel, pas social.</strong> Il s'agit de synchroniser les appareils d'un même utilisateur (ex: PC et Téléphone), pas de partager avec d'autres.
+</div>
+
+<div class="item lock">
+  <div class="badge lock">Lock</div>
+  <strong>Synchronisation manuelle et à la demande.</strong> L'automatisation invisible est abandonnée pour conserver un modèle local-first très simple.
+</div>
+
+<div class="item lock">
+  <div class="badge lock">Lock</div>
+  <strong>Écrasement unidirectionnel pur.</strong> Aucune fusion de données. Le transfert écrase et remplace intégralement l'état de l'appareil récepteur. Zéro conflit à gérer (Master/Slave).
+</div>
+
+<div class="item lock">
+  <div class="badge lock">Lock</div>
+  <strong>Transfert par fichier.</strong> L'écrasement total implique un payload lourd (la base entière). Le QR code (~3Ko) est disqualifié. Le transfert passera par un import/export de fichier JSON.
+</div>
+
+<h2 class="section-title">The Graveyard (What was Killed)</h2>
+
+<div class="item kill">
+  <div class="badge kill">Kill</div>
+  <strong>Synchro P2P via Web Bluetooth API.</strong><br>
+  Cause du décès : Support impossible sur iOS (Safari) et incapacité des navigateurs à jouer de manière fiable le rôle "Peripheral" indispensable pour du vrai P2P.
+</div>
+
+<h2 class="section-title">The Room (Interrogators)</h2>
+<div class="personas">
+  <div class="persona">
+    <div class="persona-icon">🎯</div>
+    <div class="persona-details">
+      <h4>Yui</h4>
+      <p>The Craftsman</p>
+    </div>
+  </div>
+  <div class="persona">
+    <div class="persona-icon">🌐</div>
+    <div class="persona-details">
+      <h4>Walter</h4>
+      <p>Browser Realist (Invité)</p>
+    </div>
+  </div>
+  <div class="persona">
+    <div class="persona-icon">😤</div>
+    <div class="persona-details">
+      <h4>Grumbal</h4>
+      <p>The Adversary</p>
+    </div>
+  </div>
+  <div class="persona">
+    <div class="persona-icon">🔒</div>
+    <div class="persona-details">
+      <h4>Vex</h4>
+      <p>Security Engineer</p>
+    </div>
+  </div>
+  <div class="persona">
+    <div class="persona-icon">⚙️</div>
+    <div class="persona-details">
+      <h4>Dr. Sync</h4>
+      <p>Distributed Systems (Invité)</p>
+    </div>
+  </div>
+  <div class="persona">
+    <div class="persona-icon">🚢</div>
+    <div class="persona-details">
+      <h4>Dana</h4>
+      <p>The Pragmatist</p>
+    </div>
+  </div>
+</div>
+
+</body>
+</html>

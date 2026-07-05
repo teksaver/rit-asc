@@ -19,7 +19,7 @@ Elle ne remplace pas un agenda classique ou un gestionnaire de tâches (To-Do li
 # 3. Fonctionnalités Principales (Core Features)
 
 ## 3.1. Saisie et enrichissement progressif
-- **Création sans friction :** La création d'une tâche ne requiert que son nom. Aucun autre champ (catégorie, durée, priorité, récurrence) n'est obligatoire.
+- **Création sans friction (Saisie "mitraillette") :** La création d'une tâche ne requiert que son nom. Aucun autre champ (catégorie, durée, priorité, récurrence) n'est obligatoire.
 - **Enrichissement à la carte :** L'utilisateur peut renseigner les détails (métadonnées) dès la création s'il le souhaite, ou plus tard.
 - **Enrichissement contextuel au report :** Lorsqu'une tâche incomplète n'est pas réalisée, l'interface profite de cet événement pour suggérer à l'utilisateur de l'enrichir (ex: lui attribuer une catégorie) afin d'automatiser et faciliter son prochain placement.
 
@@ -28,7 +28,7 @@ Elle ne remplace pas un agenda classique ou un gestionnaire de tâches (To-Do li
 - **Plages horaires typées :** Chaque journée type est découpée en blocs de temps dédiés à des catégories/activités (ex: 18h-19h "Ménage"). Les catégories sont subjectives et définies manuellement par l'utilisateur.
 
 ## 3.3. Fiche Tâche & Checklists internes (Prérequis)
-- Chaque tâche est indépendante du calendrier et possède une fiche détaillée optionnelle (durée estimée, catégorie, périodicité, heure de début/limite).
+- Chaque tâche est indépendante du calendrier et possède une fiche détaillée optionnelle pour l'enrichissement (catégorie, priorité). Note : La périodicité/récurrence complexe et les heures de début/limite strictes sont volontairement exclues du périmètre pour garder le système simple (amnésie bienveillante).
 - **Prérequis simplifiés :** Plutôt qu'un graphe de dépendance complexe entre plusieurs tâches indépendantes, les actions préparatoires prennent la forme d'une simple checklist textuelle à l'intérieur même de la fiche (ex: "Tâche: Peindre la chambre" -> Checklist interne: "[ ] Acheter peinture, [ ] Protéger le sol"). L'interface permet de repérer si une tâche nécessite encore de la préparation.
 
 ## 3.4. Amnésie Bienveillante & Niveaux de priorité
@@ -46,6 +46,9 @@ Elle ne remplace pas un agenda classique ou un gestionnaire de tâches (To-Do li
 - L'application fonctionne intégralement sans connexion Internet.
 - Les données sont stockées localement sur l'appareil de l'utilisateur.
 
+## 3.8. Interactions Fluides
+- **Manipulation intuitive :** L'utilisateur peut manipuler ses tâches et son calendrier de manière naturelle grâce à des interactions tactiles avancées telles que le Drag & Drop (pour assigner une tâche) et le Swipe-to-edit (pour modifier ou reporter rapidement).
+
 ---
 # 5. Hors Périmètre (Out of Scope)
 - **Intégration Calendrier :** L'application est un système fermé. Il n'y a pas d'intégration technique prévue en lecture/écriture avec l'agenda natif du téléphone ou de l'ordinateur (ex: Google Calendar, Apple Calendar).
@@ -61,3 +64,10 @@ Elle ne remplace pas un agenda classique ou un gestionnaire de tâches (To-Do li
 ## 4.2. Sauvegarde & Intégrité des données
 - **Risque ciblé :** Le stockage local via navigateur est volatil (peut être effacé lors d'un nettoyage du cache ou en cas de perte de l'appareil).
 - **Mécanisme manuel d'import/export :** L'application doit impérativement fournir un moyen d'exporter l'intégralité des données (Journées types, tâches, historiques) sous forme de fichier structuré (ex: `.json`) pour que l'utilisateur puisse le stocker manuellement (email, cloud personnel). Une fonction d'importation doit permettre de restaurer l'état complet.
+- **Fiabilité des données locales :** Les opérations de mutation en base (ex: Dexie.js) doivent être systématiquement protégées (gestion des erreurs, éviter les conditions de course) pour empêcher toute perte de données silencieuse.
+- **Récupérabilité d'une base illisible :** Si la base locale ne peut pas être ouverte (ex: migration de schéma avortée, store corrompu), l'application ne doit jamais rester bloquée sur un écran vide sans issue. Elle doit afficher un écran de récupération permettant à l'utilisateur de réinitialiser la base locale — avec avertissement explicite de perte de données — afin de repartir sur un état sain.
+
+## 4.3. Accessibilité et Ergonomie
+- **Cibles tactiles (Hitboxes) :** Toutes les zones interactives doivent faire au minimum 44x44px pour assurer une manipulation confortable sur mobile.
+- **Accessibilité visuelle :** L'interface doit respecter les normes de contrastes (textes sombres sur fonds clairs) et supporter le Dynamic Type pour l'adaptation de la taille du texte.
+- **Robustesse des interactions tactiles :** Les gestes complexes (comme le swipe ou le drag & drop) ne doivent pas interférer avec les actions de base (comme cliquer sur un bouton ou cocher une case).

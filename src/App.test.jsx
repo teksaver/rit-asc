@@ -65,6 +65,15 @@ describe('App', () => {
     expect(window.location.hash).toBe('#/planification')
   })
 
+  it('navigates to Semaine and updates the hash', async () => {
+    render(<App />)
+
+    screen.getByRole('button', { name: 'Semaine' }).click()
+
+    expect(await screen.findByRole('heading', { name: 'Semaine' })).toBeInTheDocument()
+    expect(window.location.hash).toBe('#/semaine')
+  })
+
   it('shows a not-found view for an unrecognized hash instead of silently defaulting', () => {
     window.location.hash = '#/route-inconnue'
 

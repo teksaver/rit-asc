@@ -4,6 +4,7 @@ import { TaskList } from './components/TaskList'
 import { ConfigurationView } from './components/ConfigurationView'
 import { PlanningView } from './components/PlanningView'
 import { TodayView } from './components/TodayView'
+import { WeekView } from './components/WeekView'
 import { db, resetDatabase } from './db'
 import { executeCycleJump } from './services/cycleJump'
 import './App.css'
@@ -25,6 +26,7 @@ function cx(...classes) {
 function viewFromHash(hash) {
   if (hash === '#/configuration') return 'configuration'
   if (hash === '#/planification') return 'planification'
+  if (hash === '#/semaine') return 'semaine'
   if (hash === '#/depot') return 'depot'
   if (hash === '#/' || hash === '#' || hash === '') return 'aujourdhui'
   return 'introuvable'
@@ -95,6 +97,7 @@ function App() {
       depot: '#/depot',
       configuration: '#/configuration',
       planification: '#/planification',
+      semaine: '#/semaine',
       aujourdhui: '#/',
     }
     const nextHash = hashByView[nextView] ?? '#/'
@@ -108,6 +111,7 @@ function App() {
     depot: 'Dépôt',
     configuration: 'Configuration',
     planification: 'Planification',
+    semaine: 'Semaine',
     introuvable: 'Page introuvable',
   }
 
@@ -146,6 +150,14 @@ function App() {
           </button>
           <button
             type="button"
+            className={cx('app__nav-button', view === 'semaine' && 'app__nav-button--active')}
+            aria-current={view === 'semaine' ? 'page' : undefined}
+            onClick={() => navigate('semaine')}
+          >
+            Semaine
+          </button>
+          <button
+            type="button"
             className={cx('app__nav-button', view === 'depot' && 'app__nav-button--active')}
             aria-current={view === 'depot' ? 'page' : undefined}
             onClick={() => navigate('depot')}
@@ -172,6 +184,7 @@ function App() {
       </header>
       <main className="app__main">
         {view === 'aujourdhui' && <TodayView />}
+        {view === 'semaine' && <WeekView />}
         {view === 'depot' && (
           <>
             <TaskList />

@@ -1,0 +1,6 @@
+[workflow]
+persistent_facts = [
+  "CRITICAL REQUIREMENT: When generating the story file in Step 5, you MUST explicitly include a '## 📋 Tasks / Subtasks' checklist section.",
+  "The Tasks/Subtasks section must be placed immediately after the Business Context & Value section.",
+  "The Tasks/Subtasks section must break down the implementation into actionable steps, including writing TDD/ATDD tests, the core implementation logic, and integration checks."
+]

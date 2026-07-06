@@ -47,6 +47,21 @@ L'application est exécutée entièrement dans le navigateur du client sans aucu
 - **Prevents:** Une base locale rendue définitivement illisible par une migration qui échoue (typiquement un index unique posé sur des données non conformes), laissant l'application bloquée sans recours sur un écran vide.
 - **Rule:** Les migrations Dexie sont versionnées et additives — on ne réécrit jamais le sens d'une version déjà livrée. Une contrainte d'unicité (`&index`) et le nettoyage de données qui la rend satisfiable doivent vivre dans **deux versions consécutives distinctes** (nettoyage en version N, `&index` en N+1) : Dexie construit et valide l'index **avant** d'exécuter le `.upgrade()` de la même version, donc un nettoyage placé dans la même version que la contrainte s'exécuterait trop tard. L'amorçage gâte explicitement sur `db.open()` ; tout échec d'ouverture affiche un écran de récupération permettant de réinitialiser la base locale, afin qu'aucune migration avortée ne bloque l'application silencieusement.
 
+### AD-6 — Standardisation de la Manipulation des Dates
+- **Binds:** Logique métier de gestion du temps et dates (fuseaux horaires, minuit).
+- **Prevents:** Le décalage de dates lié aux fuseaux horaires ou au passage à l'heure d'été/hiver.
+- **Rule:** Toute manipulation de date dans le code doit explicitement utiliser les API natives ISO (ex: `Intl.DateTimeFormat('en-CA')` pour forcer `YYYY-MM-DD` dans le fuseau local de manière déterministe) sans dépendances tierces lourdes, pour éviter les dérives.
+
+### AD-7 — Concurrence et Sécurité d'Écriture par Défaut
+- **Binds:** Couche d'écriture Dexie (IndexedDB) et UI des formulaires/modales.
+- **Prevents:** Les doublons silencieux en base causés par des clics multiples ("mitraillette") ou par la concurrence entre onglets.
+- **Rule:** Chaque écriture Dexie doit impérativement inclure une protection UI (un état `isBusy` ou `isSubmitting` partagé bloquant les inputs) ET être adossée à une contrainte d'unicité au niveau du schéma (ex: index unique `&...` ou index composé), posée dès la conception.
+
+### AD-8 — Test-First (TDD) pour la Logique Métier
+- **Binds:** Processus de développement des nouvelles implémentations.
+- **Prevents:** L'accumulation de cas limites (edge cases) non gérés, découverts tardivement lors des Checkpoints ou Code Reviews.
+- **Rule:** L'échafaudage des tests (ou au minimum les cas de tests critiques) doit obligatoirement être défini et discuté en TDD ou ATDD *avant* le début de l'implémentation de la logique métier complexe.
+
 ## Consistency Conventions
 
 | Concern | Convention |

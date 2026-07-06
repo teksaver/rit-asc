@@ -5,7 +5,18 @@ import { ConfigurationView } from './components/ConfigurationView'
 import { PlanningView } from './components/PlanningView'
 import { TodayView } from './components/TodayView'
 import { db, resetDatabase } from './db'
+import { executeCycleJump } from './services/cycleJump'
 import './App.css'
+
+const ISO_DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', {
+  year: 'numeric',
+  month: '2-digit',
+  day: '2-digit',
+})
+
+function toISODate(date) {
+  return ISO_DATE_FORMATTER.format(date)
+}
 
 function cx(...classes) {
   return classes.filter(Boolean).join(' ')
@@ -34,16 +45,48 @@ function App() {
 
   useEffect(() => {
     let cancelled = false
+    let dbReady = false
+    let lastCycleJumpDateISO = null
+
+    // Sans ce garde-fou, une PWA laissée ouverte au-delà de minuit ne
+    // relancerait jamais le saut de cycle : on le rejoue donc à chaque retour
+    // au premier plan si la date système a changé depuis la dernière passe.
+    const runCycleJumpIfNeeded = () => {
+      if (!dbReady || cancelled) return
+      const todayISO = toISODate(new Date())
+      if (todayISO === lastCycleJumpDateISO) return
+      lastCycleJumpDateISO = todayISO
+      // Non-bloquant à dessein : l'amnésie bienveillante ne doit jamais retarder
+      // l'affichage de l'application, ses résultats se reflètent via useLiveQuery.
+      executeCycleJump(db, todayISO)
+    }
+
     db.open()
       .then(() => {
-        if (!cancelled) setDbState('ready')
+        if (cancelled) return
+        setDbState('ready')
+        dbReady = true
+        runCycleJumpIfNeeded()
       })
       .catch((err) => {
         console.error(err)
         if (!cancelled) setDbState('error')
       })
+
+    const handleVisibilityChange = () => {
+      if (document.visibilityState === 'visible') runCycleJumpIfNeeded()
+    }
+    document.addEventListener('visibilitychange', handleVisibilityChange)
+
+    // Filet de sécurité pour l'onglet qui reste au premier plan sans jamais
+    // passer par 'visibilitychange' (poste kiosque, écran toujours actif) :
+    // on revérifie périodiquement, sans jamais bloquer ni solliciter le réseau.
+    const rolloverCheckIntervalId = setInterval(runCycleJumpIfNeeded, 5 * 60 * 1000)
+
     return () => {
       cancelled = true
+      document.removeEventListener('visibilitychange', handleVisibilityChange)
+      clearInterval(rolloverCheckIntervalId)
     }
   }, [])
 

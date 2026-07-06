@@ -42,6 +42,9 @@ NFR3: Compatibilité Chrome, Safari, Firefox, Edge.
 NFR4: Sauvegarde manuelle et restauration de toutes les données sous forme de fichier JSON (import/export).
 NFR5: Hitboxes de 44x44px minimum pour une accessibilité tactile optimale.
 NFR6: Respect des contrastes (Textes sombres sur fonds clairs) et support du Dynamic Type.
+NFR7: Récupérabilité d'une base de données corrompue — écran de récupération avec option de réinitialisation si l'ouverture de la base échoue (migration avortée, store illisible).
+NFR8: Fiabilité des écritures locales — protection contre les doublons et les conditions de course lors de saisies rapides ("mitraillette") ou de clics multiples.
+NFR9: Robustesse des interactions tactiles — les gestes complexes (swipe, drag & drop) ne doivent jamais bloquer un clic/tap natif sur un élément interactif.
 
 ### Additional Requirements
 
@@ -94,6 +97,8 @@ L'utilisateur ne subit aucune culpabilité. Le système gère les échecs et rep
 ### Epic 4: Vue d'Ensemble, Suggestions et Sauvegardes
 L'utilisateur peut prendre du recul sur sa semaine, combler les temps morts intelligemment via le moteur de suggestion et sécuriser ses données en JSON.
 **FRs covered:** FR10, FR12
+**NFRs covered:** NFR7, NFR8, NFR9
+**AR covered:** AR5
 
 <!-- Repeat for each epic in epics_list (N = 1, 2, 3...) -->
 
@@ -194,7 +199,7 @@ So that je sais quoi faire sans avoir l'angoisse de la page blanche.
 
 **Given** j'ouvre l'application pour la toute première fois
 **Then** le système génère silencieusement un modèle "Journée Standard" et l'assigne à la date d'aujourd'hui (UX-DR6)
-**And** la vue "Aujourd'hui" affiche les plages horaires prêtes à recevoir des tâches de l'Inbox (FR11) via une sélection manuelle basique (bouton d'affectation) en attendant l'Epic 3
+**And** la vue "Aujourd'hui" affiche les plages horaires prêtes à recevoir des tâches de l'Inbox (FR11) via une sélection manuelle basique (bouton d'affectation)
 **And** les jours suivants, cette vue affiche la journée planifiée courante ou invite clairement à planifier si aucune n'existe.
 
 ## Epic 3: Le Moteur d'Amnésie Bienveillante
@@ -293,3 +298,51 @@ So that j'y accède comme à une application native, même dans les transports.
 **Given** je visite l'URL de l'application via mon navigateur
 **Then** un manifeste PWA valide est détecté, permettant l'installation ("Add to Home Screen")
 **And** un Service Worker (via `vite-plugin-pwa`) met en cache les assets statiques pour que l'application s'ouvre même sans connexion réseau (NFR1).
+
+### Story 4.5: Récupération d'une Base de Données Corrompue
+
+As a Utilisateur,
+I want que l'application me propose de réinitialiser ma base locale si elle ne peut plus s'ouvrir,
+So that je ne reste jamais bloqué sur un écran vide sans solution.
+
+**Acceptance Criteria:**
+
+**Given** l'application tente d'ouvrir la base IndexedDB au démarrage (`db.open()`)
+**When** l'ouverture échoue (migration avortée, store corrompu, erreur inattendue)
+**Then** un écran de récupération s'affiche à la place d'un écran vide, avec un message clair expliquant la situation (NFR7)
+**And** un bouton "Réinitialiser la base locale" est proposé, avec un avertissement explicite de perte de données
+**And** après confirmation, la base est réinitialisée et l'application redémarre sur un état sain (onboarding par défaut, cf. Story 2.3).
+
+### Story 4.6: Déploiement Continu (CI/CD GitHub Pages)
+
+As a Utilisateur,
+I want que la dernière version de l'application soit toujours disponible en ligne sans intervention manuelle,
+So that je profite immédiatement des corrections et nouvelles fonctionnalités.
+
+**Acceptance Criteria:**
+
+**Given** une modification de code est fusionnée (merge) sur la branche `main`
+**When** le workflow GitHub Actions se déclenche automatiquement
+**Then** l'application React/Vite est buildée et publiée sur GitHub Pages sans action manuelle (AR5)
+**And** en cas d'échec du build, le déploiement précédent reste servi (pas de mise en ligne d'une version cassée)
+**And** l'URL `pseudo.github.io/RouteIn` sert toujours la dernière version publiée avec succès.
+
+### Story 4.7: Fiabilisation des Écritures et Robustesse Tactile
+
+As a Utilisateur,
+I want que mes actions rapides (saisie mitraillette, clics, swipes) ne créent jamais de doublons ni ne bloquent mes interactions,
+So that je fais confiance à l'application même dans les moments de charge mentale élevée.
+
+**Acceptance Criteria:**
+
+**Given** je presse "Entrée" plusieurs fois très rapidement sur le même texte dans le champ de saisie (Story 1.1)
+**When** les écritures Dexie se déclenchent en rafale
+**Then** une seule tâche est créée en base, protégée par un état `isSubmitting`/`isBusy` et une contrainte d'unicité au niveau du schéma (NFR8 / AD-7)
+
+**And Given** je modifie rapidement plusieurs fois la catégorie ou la priorité d'une tâche (Story 1.3)
+**When** les écritures se chevauchent
+**Then** aucune donnée corrompue ou dupliquée n'est enregistrée
+
+**And Given** j'effectue un geste de swipe-to-edit sur une Task Card (Story 3.1)
+**When** je clique ensuite sur un élément interactif de cette même carte (case à cocher, bouton)
+**Then** le clic est bien reçu et traité — le geste swipe ne bloque jamais l'interaction native (NFR9).

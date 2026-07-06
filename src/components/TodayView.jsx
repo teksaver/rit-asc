@@ -1,7 +1,8 @@
-import { useEffect, useRef, useState } from 'react'
+import { useEffect, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, UNASSIGNED_PLANNED_DAY_ID } from '../db'
 import { ensureOnboarding } from '../services/onboarding'
+import { TaskCard } from './TaskCard'
 import './TodayView.css'
 
 const WEEKDAY_FORMATTER = new Intl.DateTimeFormat('fr-FR', { weekday: 'long' })
@@ -65,12 +66,10 @@ function useTodayISO() {
 
 export function TodayView() {
   const todayISO = useTodayISO()
-  const dialogRef = useRef(null)
-  const triggerRef = useRef(null)
-  const [assigningBlockId, setAssigningBlockId] = useState(null)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [errorMsg, setErrorMsg] = useState('')
   const [onboardingDone, setOnboardingDone] = useState(false)
+  const [hoveredBlockId, setHoveredBlockId] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -129,33 +128,17 @@ export function TodayView() {
   const sortedInboxTasks = [...inboxTasks].sort((a, b) =>
     a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0,
   )
+  const assignOptions = sortedTimeBlocks.map((block) => ({
+    id: block.id,
+    label: `${block.startTime} – ${block.endTime}`,
+  }))
 
-  const openAssignDialog = (blockId, event) => {
-    setErrorMsg('')
-    setAssigningBlockId(blockId)
-    triggerRef.current = event?.currentTarget ?? null
-    dialogRef.current?.showModal()
-  }
-
-  const closeAssignDialog = () => {
-    setAssigningBlockId(null)
-    dialogRef.current?.close()
-    triggerRef.current?.focus()
-    triggerRef.current = null
-  }
-
-  const requestCloseAssignDialog = () => {
-    if (isSubmitting) return
-    closeAssignDialog()
-  }
-
-  const assignTask = async (taskId) => {
-    if (isSubmitting || !plannedDay || !assigningBlockId) return
+  const assignTask = async (taskId, blockId) => {
+    if (isSubmitting || !plannedDay || !blockId) return
     setIsSubmitting(true)
     setErrorMsg('')
     try {
-      await db.tasks.update(taskId, { plannedDayId: plannedDay.id, timeBlockId: assigningBlockId })
-      closeAssignDialog()
+      await db.tasks.update(taskId, { plannedDayId: plannedDay.id, timeBlockId: blockId })
     } catch (err) {
       console.error(err)
       setErrorMsg("Impossible d'affecter cette tâche pour le moment.")
@@ -208,7 +191,7 @@ export function TodayView() {
         <section className="today-view__section">
           <h2 className="today-view__heading">{dayTemplate.name}</h2>
 
-          {errorMsg && !assigningBlockId && (
+          {errorMsg && (
             <div className="today-view__error" role="alert">
               {errorMsg}
             </div>
@@ -218,9 +201,14 @@ export function TodayView() {
             {sortedTimeBlocks.map((block) => {
               const category = categoriesById[block.categoryId]
               const assignedTasks = tasksForDay.filter((task) => task.timeBlockId === block.id)
+              const isDropTarget = hoveredBlockId === block.id
 
               return (
-                <li key={block.id} className="today-view__block" data-time-block>
+                <li
+                  key={block.id}
+                  className={`today-view__block${isDropTarget ? ' today-view__block--drag-over' : ''}`}
+                  data-time-block={block.id}
+                >
                   <div className="today-view__block-header">
                     <span className="today-view__block-time">
                       {block.startTime} – {block.endTime}
@@ -231,30 +219,21 @@ export function TodayView() {
                   {assignedTasks.length > 0 ? (
                     <ul className="today-view__tasks">
                       {assignedTasks.map((task) => (
-                        <li key={task.id} className="today-view__task">
-                          <span>{task.title}</span>
-                          <button
-                            type="button"
-                            className="today-view__unassign-button"
-                            disabled={isSubmitting}
-                            onClick={() => unassignTask(task.id)}
-                          >
-                            Retirer
-                          </button>
-                        </li>
+                        <TaskCard
+                          key={task.id}
+                          task={task}
+                          categoriesMap={categoriesById}
+                          draggable={assignOptions.length > 0}
+                          onDrop={assignTask}
+                          onDragOver={setHoveredBlockId}
+                          onUnassign={unassignTask}
+                          disabled={isSubmitting}
+                        />
                       ))}
                     </ul>
                   ) : (
                     <p className="today-view__no-task">Aucune tâche affectée.</p>
                   )}
-
-                  <button
-                    type="button"
-                    className="today-view__assign-button"
-                    onClick={(event) => openAssignDialog(block.id, event)}
-                  >
-                    Affecter une tâche
-                  </button>
                 </li>
               )
             })}
@@ -267,66 +246,45 @@ export function TodayView() {
               </p>
               <ul className="today-view__tasks">
                 {orphanedTasks.map((task) => (
-                  <li key={task.id} className="today-view__task">
-                    <span>{task.title}</span>
-                    <button
-                      type="button"
-                      className="today-view__unassign-button"
-                      disabled={isSubmitting}
-                      onClick={() => unassignTask(task.id)}
-                    >
-                      Retirer
-                    </button>
-                  </li>
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    categoriesMap={categoriesById}
+                    draggable={assignOptions.length > 0}
+                    onDrop={assignTask}
+                    onDragOver={setHoveredBlockId}
+                    onUnassign={unassignTask}
+                    disabled={isSubmitting}
+                  />
                 ))}
               </ul>
             </div>
           )}
+
+          <div className="today-view__depot">
+            <p className="today-view__depot-heading">Dépôt</p>
+            {sortedInboxTasks.length === 0 ? (
+              <p className="today-view__no-task">Aucune tâche à affecter pour le moment.</p>
+            ) : (
+              <ul className="today-view__depot-list">
+                {sortedInboxTasks.map((task) => (
+                  <TaskCard
+                    key={task.id}
+                    task={task}
+                    categoriesMap={categoriesById}
+                    draggable={assignOptions.length > 0}
+                    onDrop={assignTask}
+                    onDragOver={setHoveredBlockId}
+                    assignOptions={assignOptions}
+                    onAssign={assignTask}
+                    disabled={isSubmitting}
+                  />
+                ))}
+              </ul>
+            )}
+          </div>
         </section>
       )}
-
-      <dialog
-        ref={dialogRef}
-        className="today-view__dialog"
-        aria-label="Affecter une tâche de l'Inbox"
-        onCancel={(event) => {
-          if (isSubmitting) {
-            event.preventDefault()
-            return
-          }
-          closeAssignDialog()
-        }}
-        onClick={(event) => {
-          if (event.target === dialogRef.current) requestCloseAssignDialog()
-        }}
-      >
-        <p>Choisissez une tâche du Dépôt à affecter à cette plage.</p>
-
-        {errorMsg && assigningBlockId && (
-          <div className="today-view__error" role="alert">
-            {errorMsg}
-          </div>
-        )}
-
-        {sortedInboxTasks.length === 0 ? (
-          <p className="today-view__no-task">Aucune tâche disponible dans le Dépôt.</p>
-        ) : (
-          <ul className="today-view__dialog-tasks">
-            {sortedInboxTasks.map((task) => (
-              <li key={task.id}>
-                <button type="button" disabled={isSubmitting} onClick={() => assignTask(task.id)}>
-                  {task.title}
-                </button>
-              </li>
-            ))}
-          </ul>
-        )}
-        <div className="today-view__dialog-actions">
-          <button type="button" disabled={isSubmitting} onClick={requestCloseAssignDialog}>
-            Annuler
-          </button>
-        </div>
-      </dialog>
     </div>
   )
 }

@@ -54,7 +54,7 @@ L'application doit incarner le calme, la clarté et la décharge mentale. L'inte
 - Bords arrondis (`lg` 16px) pour les cartes de tâches et les blocs horaires, renforçant le côté "amical" et organique de l'outil.
 
 # 7. Components
-- **Task Card (Carte de tâche) :** Un rectangle blanc avec une case à cocher (cercle parfait). Les métadonnées (catégorie, durée) apparaissent sous forme de "pilules" (tags) discrètes et grisées si elles sont renseignées.
+- **Task Card (Carte de tâche) :** Un rectangle blanc avec une case à cocher (cercle parfait). Les métadonnées (catégorie) apparaissent sous forme de "pilules" (tags) discrètes et grisées si elles sont renseignées.
 - **Time Block (Plage horaire) :** Un conteneur à fond légèrement teinté (selon la catégorie, ex: pastel bleu pour "Travail") dans lequel viennent se loger les Task Cards.
 - **Progressive Input (Champ de saisie) :** Un simple champ texte persistant en bas de l'écran ou flottant (FAB), permettant de taper et valider en 1 touche.
 

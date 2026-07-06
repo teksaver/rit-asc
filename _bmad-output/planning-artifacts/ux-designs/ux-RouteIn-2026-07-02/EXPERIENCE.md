@@ -30,7 +30,7 @@ updated: 2026-07-02
 - **Le Report Invisible :** Quand une tâche "Reportable" franchit son heure limite sans être cochée, elle disparaît silencieusement de la vue du jour (sans badge rouge) et se place en attente en arrière-plan pour le prochain bloc pertinent de la semaine.
 
 # 6. Interaction Primitives
-- **Swipe-to-edit :** Swiper une tâche vers la gauche permet de la rejeter/annuler. Swiper vers la droite ouvre le menu d'enrichissement (Catégorie, Durée).
+- **Swipe-to-edit :** Swiper une tâche vers la gauche permet de la rejeter/annuler. Swiper vers la droite ouvre le menu d'enrichissement (Catégorie).
 - **Drag & Drop :** L'utilisateur peut maintenir une tâche pour la faire glisser d'une plage horaire à une autre.
 
 # 7. Accessibility Floor

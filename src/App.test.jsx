@@ -2,6 +2,12 @@ import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
 import { render, screen } from '@testing-library/react'
 import App from './App'
 import { db } from './db'
+import * as cycleJump from './services/cycleJump'
+
+function setVisibilityState(state) {
+  Object.defineProperty(document, 'visibilityState', { value: state, configurable: true })
+  document.dispatchEvent(new Event('visibilitychange'))
+}
 
 describe('App', () => {
   beforeEach(() => {
@@ -81,5 +87,50 @@ describe('App', () => {
     ).toBeInTheDocument()
     // The normal navigation must NOT render on top of the fatal-error screen.
     expect(screen.queryByRole('navigation', { name: 'Navigation principale' })).not.toBeInTheDocument()
+  })
+
+  it('rejoue le saut de cycle quand la date change et que l’onglet redevient visible', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T10:00:00'))
+    const executeCycleJumpSpy = vi.spyOn(cycleJump, 'executeCycleJump').mockResolvedValue(undefined)
+
+    render(<App />)
+    await vi.waitFor(() => expect(executeCycleJumpSpy).toHaveBeenCalledTimes(1))
+    expect(executeCycleJumpSpy).toHaveBeenLastCalledWith(db, '2026-07-06')
+
+    // Onglet caché puis ré-affiché le même jour : pas de nouveau passage.
+    setVisibilityState('hidden')
+    setVisibilityState('visible')
+    expect(executeCycleJumpSpy).toHaveBeenCalledTimes(1)
+
+    // La date système bascule au lendemain pendant que l'app reste ouverte.
+    vi.setSystemTime(new Date('2026-07-07T00:05:00'))
+    setVisibilityState('hidden')
+    setVisibilityState('visible')
+
+    expect(executeCycleJumpSpy).toHaveBeenCalledTimes(2)
+    expect(executeCycleJumpSpy).toHaveBeenLastCalledWith(db, '2026-07-07')
+
+    vi.useRealTimers()
+  })
+
+  it('rejoue le saut de cycle via le filet de sécurité périodique même si l’onglet ne perd jamais le focus', async () => {
+    vi.useFakeTimers()
+    vi.setSystemTime(new Date('2026-07-06T10:00:00'))
+    const executeCycleJumpSpy = vi.spyOn(cycleJump, 'executeCycleJump').mockResolvedValue(undefined)
+
+    render(<App />)
+    await vi.waitFor(() => expect(executeCycleJumpSpy).toHaveBeenCalledTimes(1))
+
+    // La date système bascule au lendemain sans que l'onglet ne change jamais
+    // de visibilité (poste kiosque) : seul le filet de sécurité périodique
+    // peut détecter le changement de jour.
+    vi.setSystemTime(new Date('2026-07-07T00:05:00'))
+    await vi.advanceTimersByTimeAsync(5 * 60 * 1000)
+
+    expect(executeCycleJumpSpy).toHaveBeenCalledTimes(2)
+    expect(executeCycleJumpSpy).toHaveBeenLastCalledWith(db, '2026-07-07')
+
+    vi.useRealTimers()
   })
 })

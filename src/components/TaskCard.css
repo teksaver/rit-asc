@@ -19,6 +19,30 @@
   box-shadow: var(--shadow-card);
   animation: task-card-enter 0.3s ease-out;
   touch-action: pan-y;
+  transition: transform 0.2s ease, box-shadow 0.2s ease;
+}
+
+.task-card--swiping {
+  /* Suivi 1:1 du doigt pendant le swipe ; la transition de base (transform 0.2s
+     ease) reprend au relâchement pour l'effet de retour élastique vers 0. */
+  transition: none;
+}
+
+.task-card--dragging {
+  position: relative;
+  z-index: 10;
+  transition: none;
+  /* Le scroll vertical natif (touch-action: pan-y hérité) reste disponible tant que
+     le geste n'est pas encore identifié comme un drag ; on ne le bloque qu'une fois
+     la carte réellement décollée, pour ne pas gêner le défilement de la liste au repos. */
+  touch-action: none;
+  box-shadow: 0 16px 32px rgba(31, 41, 55, 0.25);
+  opacity: 0.95;
+  /* La carte décollée survole visuellement les zones de dépôt : sans ceci,
+     document.elementFromPoint() la détecterait elle-même au lieu de la plage
+     horaire sous-jacente. Le pointeur reste capté (setPointerCapture), donc les
+     événements pointermove/pointerup continuent d'être livrés normalement. */
+  pointer-events: none;
 }
 
 .task-card__row {
@@ -46,6 +70,43 @@
 .task-card__edit-button:hover,
 .task-card__edit-button:focus-visible {
   background: var(--color-muted);
+}
+
+@keyframes task-card-stagnant-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.task-card__edit-button--stagnant {
+  position: relative;
+  color: var(--color-accent);
+  animation: task-card-enter 0.3s ease-out, task-card-stagnant-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* WCAG 2.2.2 (Pause, Stop, Hide) : ce pulse est infini, contrairement aux
+     animations d'entrée ponctuelles (0.3s) du reste du composant. On le
+     désactive pour les utilisateurs qui demandent moins de mouvement, la
+     pastille et la couleur accent restent suffisantes pour signaler l'état. */
+  .task-card__edit-button--stagnant {
+    animation: none;
+  }
+}
+
+.task-card__edit-button--stagnant::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
 }
 
 .task-card__tags {
@@ -146,4 +207,52 @@
 .task-card__checklist-text--done {
   color: var(--color-text-secondary);
   text-decoration: line-through;
+}
+
+.task-card__footer {
+  display: flex;
+  align-items: center;
+  gap: var(--spacing-sm);
+  padding-left: calc(44px + var(--spacing-md));
+}
+
+.task-card__unassign-button {
+  border: none;
+  background: transparent;
+  color: var(--color-text-secondary);
+  font-size: 13px;
+  min-height: 44px;
+  padding: 0 var(--spacing-sm);
+  margin-left: calc(-1 * var(--spacing-sm));
+  cursor: pointer;
+}
+
+.task-card__unassign-button:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.task-card__unassign-button:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.task-card__assign-label {
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.task-card__assign-select {
+  min-height: 44px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--color-muted);
+  background: var(--color-surface);
+  color: var(--color-text-primary);
+  font-size: 13px;
+  padding: 0 var(--spacing-sm);
+}
+
+.task-card__assign-select:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
 }

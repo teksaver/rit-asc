@@ -69,3 +69,7 @@
 - Boîte de dialogue d'affectation sans titre accessible réel (`aria-labelledby`/`h2`) [src/components/TodayView.jsx] — pré-existant, `aria-label` seul reste une expérience lecteur d'écran plus faible qu'un titre associé.
 - Aucun moyen de retrouver une tâche déjà marquée "completed" après désaffectation (`Retirer`) [src/components/TodayView.jsx] — actuellement impossible à atteindre via l'UI (aucune case à cocher n'est exposée pour les tâches déjà affectées à une plage) ; relève de la manipulation de tâches planifiées, prévue en Epic 3.
 - Index unique `&date` introduit en `db.version(6)` sans migration de dédoublonnage [src/db.js] — pré-existant, pas de garde-fou si des données locales avaient déjà des doublons de date avant cette version.
+
+## Deferred from: code review of 3-1-manipulation-et-affectation-des-taches.md (2026-07-06)
+- Création d'index uniques Dexie (AD-7) — deferred, pre-existing
+- Verrouillage global de la vue TodayView lors de la soumission — deferred, pre-existing

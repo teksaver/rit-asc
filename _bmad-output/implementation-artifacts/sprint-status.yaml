@@ -64,7 +64,7 @@ development_status:
   3-1-manipulation-et-affectation-des-taches: done
   3-2-le-saut-de-cycle: done
   3-3-suggestions-denrichissement-sur-report: done
-  epic-3-retrospective: optional
+  epic-3-retrospective: done
   epic-4: backlog
   4-1-vue-semaine-et-export: backlog
   4-2-moteur-de-suggestion: backlog
@@ -74,3 +74,25 @@ development_status:
   4-6-deploiement-continu-cicd: backlog
   4-7-fiabilisation-ecritures-et-robustesse-tactile: backlog
   epic-4-retrospective: optional
+
+action_items:
+  - epic: 3
+    action: "Résorber les orphelins plannedDayId (réaffecter/nettoyer les tâches à la suppression d'un PlannedDay) avant de démarrer 4.1"
+    owner: "dev/Winston"
+    status: open
+  - epic: 3
+    action: "Établir et appliquer un mini-runbook de vérification navigateur réel (HTTPS local + contexte sécurisé crypto.randomUUID)"
+    owner: "Sylvain/Murat"
+    status: open
+  - epic: 3
+    action: "Extraire les constantes métier (priorités should/could, seuil 48h) hors des composants UI vers un module partagé"
+    owner: "dev"
+    status: open
+  - epic: 3
+    action: "Isoler chaque story dans un worktree dédié pour éliminer le bruit de revue inter-session"
+    owner: "Sylvain"
+    status: open
+  - epic: 3
+    action: "Traiter les items UX-critiques du backlog différé (au minimum la confusion checkbox/checklist d'Epic 1) avant d'empiler de nouvelles features"
+    owner: "Sylvain"
+    status: open

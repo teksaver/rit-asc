@@ -72,6 +72,43 @@
   background: var(--color-muted);
 }
 
+@keyframes task-card-stagnant-pulse {
+  0%,
+  100% {
+    opacity: 1;
+  }
+  50% {
+    opacity: 0.55;
+  }
+}
+
+.task-card__edit-button--stagnant {
+  position: relative;
+  color: var(--color-accent);
+  animation: task-card-enter 0.3s ease-out, task-card-stagnant-pulse 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  /* WCAG 2.2.2 (Pause, Stop, Hide) : ce pulse est infini, contrairement aux
+     animations d'entrée ponctuelles (0.3s) du reste du composant. On le
+     désactive pour les utilisateurs qui demandent moins de mouvement, la
+     pastille et la couleur accent restent suffisantes pour signaler l'état. */
+  .task-card__edit-button--stagnant {
+    animation: none;
+  }
+}
+
+.task-card__edit-button--stagnant::after {
+  content: '';
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 8px;
+  height: 8px;
+  border-radius: var(--radius-full);
+  background: var(--color-accent);
+}
+
 .task-card__tags {
   display: flex;
   flex-wrap: wrap;

@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
 import { SlidersHorizontal } from 'lucide-react'
-import { db } from '../db'
+import { db, UNASSIGNED_PLANNED_DAY_ID } from '../db'
 import { TaskEnrichment, PRIORITY_OPTIONS } from './TaskEnrichment'
 import './TaskCard.css'
 
@@ -13,6 +13,12 @@ const SWIPE_OPEN_THRESHOLD = 60
 const DRAG_VERTICAL_THRESHOLD = 24
 const SWIPE_DECIDE_THRESHOLD = 10
 const LONG_PRESS_MS = 350
+const STAGNATION_THRESHOLD_MS = 48 * 60 * 60 * 1000
+// La carte reste montée sans re-render tant que rien d'autre ne change en base ;
+// sans ce tick périodique, une tâche qui franchit le seuil de 48h pendant que
+// l'app reste ouverte ne ferait apparaître l'indicateur qu'au prochain re-render
+// fortuit (ex: modification d'une autre tâche).
+const STAGNATION_RECHECK_INTERVAL_MS = 15 * 60 * 1000
 
 function resolveDropTarget(clientX, clientY) {
   const el = document.elementFromPoint(clientX, clientY)
@@ -43,6 +49,20 @@ export function TaskCard({
 
   const isCompleted = task.status === 'completed'
   const isAssignedToBlock = Boolean(task.timeBlockId)
+  const isInDepot =
+    !isCompleted && !isAssignedToBlock && (!task.plannedDayId || task.plannedDayId === UNASSIGNED_PLANNED_DAY_ID)
+
+  const [, recheckStagnation] = useState(0)
+  useEffect(() => {
+    const intervalId = setInterval(() => recheckStagnation((tick) => tick + 1), STAGNATION_RECHECK_INTERVAL_MS)
+    return () => clearInterval(intervalId)
+  }, [])
+
+  const isStagnant =
+    isInDepot &&
+    !task.categoryId &&
+    Boolean(task.createdAt) &&
+    Date.now() - new Date(task.createdAt).getTime() > STAGNATION_THRESHOLD_MS
 
   const category = task.categoryId && categoriesMap ? categoriesMap[task.categoryId] : undefined
   const priorityLabel = PRIORITY_OPTIONS.find((option) => option.value === task.priority)?.label
@@ -227,8 +247,8 @@ export function TaskCard({
         </span>
         <button
           type="button"
-          className="task-card__edit-button"
-          aria-label="Modifier la tâche"
+          className={`task-card__edit-button${isStagnant ? ' task-card__edit-button--stagnant' : ''}`}
+          aria-label={isStagnant ? 'Modifier la tâche (catégorie suggérée)' : 'Modifier la tâche'}
           aria-expanded={isEnrichmentOpen}
           onClick={() => setIsEnrichmentOpen((open) => !open)}
         >

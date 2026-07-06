@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, beforeAll, afterEach, vi } from 'vitest'
-import { render, screen, fireEvent, waitFor } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react'
 import { TaskCard } from './TaskCard'
 import { db } from '../db'
 
@@ -290,6 +290,125 @@ describe('TaskCard', () => {
       fireEvent.change(screen.getByLabelText('Affecter à'), { target: { value: 'block-1' } })
 
       expect(onAssign).toHaveBeenCalledWith(task.id, 'block-1')
+    })
+  })
+
+  describe('stagnation suggestion (Story 3.3)', () => {
+    // Horloge figée plutôt que Date.now() réel au chargement du fichier : les
+    // assertions sur les seuils (48h, tick périodique) restent déterministes
+    // quelle que soit la durée d'exécution de la suite.
+    const NOW = new Date('2026-07-06T12:00:00.000Z').getTime()
+    const STAGNANT_CREATED_AT = new Date(NOW - 50 * 60 * 60 * 1000).toISOString()
+    const FRESH_CREATED_AT = new Date(NOW - 2 * 60 * 60 * 1000).toISOString()
+
+    beforeEach(() => {
+      // shouldAdvanceTime laisse les micro/macrotâches réelles (fake-indexeddb,
+      // testing-library) s'exécuter normalement ; seule Date.now()/new Date()
+      // est figée.
+      vi.useFakeTimers({ shouldAdvanceTime: true })
+      vi.setSystemTime(NOW)
+    })
+
+    afterEach(() => {
+      vi.useRealTimers()
+    })
+
+    it('suggests assigning a category when the task has stagnated in the Dépôt for more than 48h', async () => {
+      const task = await addTask({ createdAt: STAGNANT_CREATED_AT, categoryId: null, timeBlockId: null })
+      render(<TaskCard task={task} />)
+
+      const editButton = screen.getByRole('button', { name: 'Modifier la tâche (catégorie suggérée)' })
+      expect(editButton.className).toContain('task-card__edit-button--stagnant')
+    })
+
+    it('does not suggest a category when the task already has one', async () => {
+      const categoryId = crypto.randomUUID()
+      await db.categories.add({ id: categoryId, name: 'Maison', color: '#FDE68A' })
+      const task = await addTask({ createdAt: STAGNANT_CREATED_AT, categoryId, timeBlockId: null })
+      render(<TaskCard task={task} />)
+
+      const editButton = screen.getByRole('button', { name: 'Modifier la tâche' })
+      expect(editButton.className).not.toContain('task-card__edit-button--stagnant')
+    })
+
+    it('does not suggest a category when createdAt is missing (legacy data)', async () => {
+      // new Date(null/undefined) résout à l'epoch (1970), donc sans garde
+      // explicite une tâche sans createdAt serait à tort perçue comme stagnante.
+      const task = await addTask({ createdAt: null, categoryId: null, timeBlockId: null })
+      render(<TaskCard task={task} />)
+
+      const editButton = screen.getByRole('button', { name: 'Modifier la tâche' })
+      expect(editButton.className).not.toContain('task-card__edit-button--stagnant')
+    })
+
+    it('does not suggest a category for a task created less than 48h ago', async () => {
+      const task = await addTask({ createdAt: FRESH_CREATED_AT, categoryId: null, timeBlockId: null })
+      render(<TaskCard task={task} />)
+
+      const editButton = screen.getByRole('button', { name: 'Modifier la tâche' })
+      expect(editButton.className).not.toContain('task-card__edit-button--stagnant')
+    })
+
+    it('does not suggest a category for a completed task', async () => {
+      const task = await addTask({
+        createdAt: STAGNANT_CREATED_AT,
+        categoryId: null,
+        timeBlockId: null,
+        status: 'completed',
+      })
+      render(<TaskCard task={task} />)
+
+      const editButton = screen.getByRole('button', { name: 'Modifier la tâche' })
+      expect(editButton.className).not.toContain('task-card__edit-button--stagnant')
+    })
+
+    it('does not suggest a category for a task already assigned to a time block', async () => {
+      const task = await addTask({
+        createdAt: STAGNANT_CREATED_AT,
+        categoryId: null,
+        plannedDayId: 'day-1',
+        timeBlockId: 'block-1',
+      })
+      render(<TaskCard task={task} onUnassign={() => {}} />)
+
+      const editButton = screen.getByRole('button', { name: 'Modifier la tâche' })
+      expect(editButton.className).not.toContain('task-card__edit-button--stagnant')
+    })
+
+    it('does not suggest a category for a task already planned for a day, even if not yet assigned to a time block', async () => {
+      // Une tâche affectée à un jour précis (plannedDayId réel) n'est plus dans le
+      // Dépôt, même si elle n'a pas encore de plage horaire (timeBlockId null) :
+      // l'AC ne cible que les tâches qui stagnent dans le Dépôt.
+      const task = await addTask({
+        createdAt: STAGNANT_CREATED_AT,
+        categoryId: null,
+        plannedDayId: 'day-1',
+        timeBlockId: null,
+      })
+      render(<TaskCard task={task} assignOptions={[{ id: 'block-1', label: '10:00 – 11:00' }]} />)
+
+      const editButton = screen.getByRole('button', { name: 'Modifier la tâche' })
+      expect(editButton.className).not.toContain('task-card__edit-button--stagnant')
+    })
+
+    it('re-evaluates stagnation over time without an unrelated re-render', async () => {
+      const task = await addTask({
+        createdAt: new Date(NOW - 47 * 60 * 60 * 1000).toISOString(),
+        categoryId: null,
+        timeBlockId: null,
+      })
+      render(<TaskCard task={task} />)
+
+      expect(screen.getByRole('button', { name: 'Modifier la tâche' })).toBeInTheDocument()
+
+      // Fait franchir le seuil de 48h sans déclencher de re-render externe :
+      // seul le tick périodique interne doit rafraîchir l'indicateur.
+      vi.setSystemTime(NOW - 47 * 60 * 60 * 1000 + 49 * 60 * 60 * 1000)
+      await act(async () => {
+        await vi.advanceTimersByTimeAsync(15 * 60 * 1000)
+      })
+
+      expect(screen.getByRole('button', { name: 'Modifier la tâche (catégorie suggérée)' })).toBeInTheDocument()
     })
   })
 })

@@ -84,3 +84,7 @@
 ## Deferred from: patch-round review of 3-2-le-saut-de-cycle.md (2026-07-06)
 - `plannedDayId` orphelin après suppression d'un `PlannedDay` [src/components/PlanningView.jsx:141] — pré-existant (introduit en story 2.2) : `performDuplicate` supprime un `PlannedDay` sans jamais réaffecter les tâches qui le référencent encore, ce qui les rend invisibles à la fois du Dépôt et du saut de cycle (leur `plannedDayId` ne matche plus aucune ligne, ni passée ni future).
 - Duplication des chaînes de priorité [src/services/cycleJump.js] — `REPOSITIONABLE_PRIORITIES` redéfinit localement les valeurs `should`/`could` déjà exposées via `PRIORITY_OPTIONS` (`src/components/TaskEnrichment.jsx`) ; une extraction vers un module de constantes partagé permettrait d'éviter la dérive si ces valeurs changent, mais implique de toucher plusieurs fichiers UI et dépasse le cadre d'un patch trivial.
+
+## Deferred from: code review of 3-3-suggestions-denrichissement-sur-report.md (2026-07-06)
+
+- Hardcoded Business Logic in UI Layer [src/components/TaskCard.jsx] — The 48-hour threshold is hardcoded in the presentation component.

@@ -62,6 +62,12 @@ describe('WeekView', () => {
     expect(screen.getByText('Dimanche 12/07')).toBeInTheDocument()
   })
 
+  it("affiche les bornes de la semaine dans l'en-tête", async () => {
+    render(<WeekView />)
+
+    expect(await screen.findByRole('heading', { name: 'Semaine du 06/07 au 12/07' })).toBeInTheDocument()
+  })
+
   it('gère élégamment une semaine sans aucune journée planifiée', async () => {
     render(<WeekView />)
 
@@ -105,6 +111,54 @@ describe('WeekView', () => {
     fireEvent.click(exportButton)
 
     expect(printSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('affiche les tâches planifiées sans plage horaire au lieu de les masquer', async () => {
+    const { plannedDayId } = await seedPlannedDay({
+      date: '2026-07-08',
+      templateName: 'Télétravail',
+      block: { startTime: '10:00', endTime: '11:00' },
+    })
+    await db.tasks.add({
+      id: crypto.randomUUID(),
+      title: 'Tâche sans bloc',
+      status: 'planned',
+      createdAt: new Date().toISOString(),
+      plannedDayId,
+      timeBlockId: null,
+    })
+
+    render(<WeekView />)
+
+    expect(await screen.findByText('Tâche sans bloc')).toBeInTheDocument()
+    expect(screen.getByText('Tâches sans plage horaire')).toBeInTheDocument()
+  })
+
+  it('traite une tâche dont la plage horaire appartient à un autre modèle comme sans plage', async () => {
+    const { timeBlockId: foreignBlockId } = await seedPlannedDay({
+      date: '2026-07-07',
+      templateName: 'Modèle du mardi',
+      block: { startTime: '08:00', endTime: '09:00' },
+    })
+    const { plannedDayId } = await seedPlannedDay({
+      date: '2026-07-08',
+      templateName: 'Modèle du mercredi',
+      block: { startTime: '10:00', endTime: '11:00' },
+    })
+    await db.tasks.add({
+      id: crypto.randomUUID(),
+      title: 'Tâche mal aiguillée',
+      status: 'planned',
+      createdAt: new Date().toISOString(),
+      plannedDayId,
+      timeBlockId: foreignBlockId,
+    })
+
+    render(<WeekView />)
+
+    const taskEl = await screen.findByText('Tâche mal aiguillée')
+    const wednesdayCell = taskEl.closest('li.week-view__day')
+    expect(within(wednesdayCell).getByText('Tâches sans plage horaire')).toBeInTheDocument()
   })
 
   it('rattache chaque tâche à sa journée dans la grille', async () => {

@@ -1,19 +1,10 @@
 import { useLiveQuery } from 'dexie-react-hooks'
-import { db, UNASSIGNED_PLANNED_DAY_ID } from '../db'
-import { getWeekRange, parseISODate } from '../services/weekRange'
+import { db } from '../db'
+import { getWeekRange, parseISODate, toISODate } from '../services/weekRange'
 import './WeekView.css'
 
 const WEEKDAY_FORMATTER = new Intl.DateTimeFormat('fr-FR', { weekday: 'long' })
 const DAY_MONTH_FORMATTER = new Intl.DateTimeFormat('fr-FR', { day: '2-digit', month: '2-digit' })
-const ISO_DATE_FORMATTER = new Intl.DateTimeFormat('en-CA', {
-  year: 'numeric',
-  month: '2-digit',
-  day: '2-digit',
-})
-
-function todayISO() {
-  return ISO_DATE_FORMATTER.format(new Date())
-}
 
 function formatDayLabel(isoDate) {
   const date = parseISODate(isoDate)
@@ -27,7 +18,7 @@ function sortByStartTime(a, b) {
 }
 
 export function WeekView() {
-  const { mondayISO, sundayISO, dates } = getWeekRange(todayISO())
+  const { mondayISO, sundayISO, dates } = getWeekRange(toISODate(new Date()))
 
   // Vue en lecture seule : on lit la semaine déjà stockée dans Dexie (AD-1).
   // La borne est inclusive des deux côtés (lundi → dimanche compris).
@@ -35,29 +26,43 @@ export function WeekView() {
     () => db.plannedDays.where('date').between(mondayISO, sundayISO, true, true).toArray(),
     [mondayISO, sundayISO],
   )
-  const dayTemplates = useLiveQuery(() => db.dayTemplates.toArray(), [], [])
-  const timeBlocks = useLiveQuery(() => db.timeBlocks.toArray(), [], [])
-  const categories = useLiveQuery(() => db.categories.toArray(), [], [])
-  // Chargement complet puis filtrage en mémoire (comme TodayView) : évite une
-  // requête chaînée dépendante d'une autre useLiveQuery et son timing fragile.
-  const plannedTasks = useLiveQuery(
-    () => db.tasks.where('plannedDayId').notEqual(UNASSIGNED_PLANNED_DAY_ID).toArray(),
-    [],
-    [],
-  )
+  const dayTemplates = useLiveQuery(() => db.dayTemplates.toArray(), [])
+  const timeBlocks = useLiveQuery(() => db.timeBlocks.toArray(), [])
+  const categories = useLiveQuery(() => db.categories.toArray(), [])
+  // Bornée aux `plannedDayId` de la semaine affichée (pas tout l'historique des
+  // tâches planifiées) : évite de charger en mémoire des tâches d'autres semaines
+  // et de les re-filtrer à chaque bloc/jour rendu.
+  const plannedTasks = useLiveQuery(() => {
+    if (!plannedDays) return undefined
+    const plannedDayIds = plannedDays.map((plannedDay) => plannedDay.id)
+    return plannedDayIds.length === 0
+      ? []
+      : db.tasks.where('plannedDayId').anyOf(plannedDayIds).toArray()
+  }, [plannedDays])
 
-  const isLoading = plannedDays === undefined
+  const isLoading =
+    plannedDays === undefined ||
+    dayTemplates === undefined ||
+    timeBlocks === undefined ||
+    categories === undefined ||
+    plannedTasks === undefined
 
-  const dayTemplatesById = dayTemplates.reduce((acc, template) => {
+  const dayTemplatesById = (dayTemplates ?? []).reduce((acc, template) => {
     acc[template.id] = template
     return acc
   }, {})
-  const categoriesById = categories.reduce((acc, category) => {
+  const categoriesById = (categories ?? []).reduce((acc, category) => {
     acc[category.id] = category
     return acc
   }, {})
   const plannedDaysByDate = (plannedDays ?? []).reduce((acc, plannedDay) => {
     acc[plannedDay.date] = plannedDay
+    return acc
+  }, {})
+  // Tâches groupées par jour planifié : chaque bloc ne filtre plus que sur les
+  // tâches de SON jour (au lieu de la semaine entière) pour l'affectation aux blocs.
+  const tasksByPlannedDayId = (plannedTasks ?? []).reduce((acc, task) => {
+    ;(acc[task.plannedDayId] ??= []).push(task)
     return acc
   }, {})
 
@@ -75,10 +80,14 @@ export function WeekView() {
         </button>
       </div>
 
-      {isLoading && <p className="week-view__loading">Chargement de votre semaine…</p>}
+      {isLoading && (
+        <p className="week-view__loading" aria-live="polite">
+          Chargement de votre semaine…
+        </p>
+      )}
 
       {!isLoading && !hasAnyPlannedDay && (
-        <p className="week-view__empty">
+        <p className="week-view__empty" aria-live="polite">
           Aucune journée n'est planifiée cette semaine. Rendez-vous dans la Planification pour
           organiser vos journées.
         </p>
@@ -94,6 +103,9 @@ export function WeekView() {
                   .filter((block) => block.dayTemplateId === plannedDay.dayTemplateId)
                   .sort(sortByStartTime)
               : []
+            const dayTasks = plannedDay ? (tasksByPlannedDayId[plannedDay.id] ?? []) : []
+            const dayBlockIds = new Set(dayBlocks.map((block) => block.id))
+            const orphanTasks = dayTasks.filter((task) => !dayBlockIds.has(task.timeBlockId))
 
             return (
               <li key={date} className="week-view__day">
@@ -112,10 +124,7 @@ export function WeekView() {
                       <ul className="week-view__blocks">
                         {dayBlocks.map((block) => {
                           const category = categoriesById[block.categoryId]
-                          const blockTasks = plannedTasks.filter(
-                            (task) =>
-                              task.plannedDayId === plannedDay.id && task.timeBlockId === block.id,
-                          )
+                          const blockTasks = dayTasks.filter((task) => task.timeBlockId === block.id)
                           return (
                             <li key={block.id} className="week-view__block">
                               <div className="week-view__block-header">
@@ -139,6 +148,18 @@ export function WeekView() {
                           )
                         })}
                       </ul>
+                    )}
+                    {orphanTasks.length > 0 && (
+                      <div className="week-view__day-orphaned">
+                        <p className="week-view__day-orphaned-heading">Tâches sans plage horaire</p>
+                        <ul className="week-view__block-tasks">
+                          {orphanTasks.map((task) => (
+                            <li key={task.id} className="week-view__block-task">
+                              {task.title}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
                     )}
                   </div>
                 )}

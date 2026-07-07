@@ -33,6 +33,10 @@
   transition: background 0.2s ease;
 }
 
+.week-view__export:hover {
+  filter: brightness(0.92);
+}
+
 .week-view__export:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
@@ -148,6 +152,21 @@
   color: var(--color-text-primary);
 }
 
+.week-view__day-orphaned {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+}
+
+.week-view__day-orphaned-heading {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
 /* Impression système / export PDF : on masque la navigation applicative et le
    bouton d'export, on neutralise ombres et couleurs de fond pour un rendu papier
    propre, et on déploie la grille sur toute la largeur de la page. */
@@ -176,5 +195,12 @@
   .week-view__block {
     background: transparent;
     border: 1px solid var(--color-muted);
+  }
+
+  /* Le texte accent/secondaire (violet, gris clair) est peu lisible une fois
+     imprimé en noir et blanc : on repasse sur la couleur de texte principale. */
+  .week-view__day-template,
+  .week-view__block-category {
+    color: var(--color-text-primary);
   }
 }

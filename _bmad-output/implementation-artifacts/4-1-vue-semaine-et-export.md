@@ -80,6 +80,27 @@ Revue à 3 agents (Blind Hunter, Edge Case Hunter, Acceptance Auditor) sur le di
 - [x] [Review][Reject] Recalcul de « today » sans mémoïsation — doublon du finding déjà différé « Données obsolètes si l'application reste ouverte » ci-dessus.
 - [x] [Review][Reject] Locale `fr-FR` codée en dur — cohérent avec le reste de l'app, i18n hors périmètre.
 
+### Review Findings — Round 3
+
+- [x] [Review][Patch] Test fragility in App.test.jsx due to exact match on dynamic heading text [src/App.test.jsx] — corrigé : chaque assertion `getByRole('heading', ...)` du fichier précise désormais `level: 1` pour cibler sans ambiguïté le titre de l'App shell (`<h1 className="app__title">`), le distinguant des sous-titres de vue (`<h2>`/`<h3>`) — dont le nouveau `<h2>` « Semaine du DD/MM au DD/MM » ajouté par cette story.
+- [x] [Review][Reject — vérifié] Missing explicit import of fake-indexeddb in WeekView.test.jsx [src/components/WeekView.test.jsx] — non applicable : `fake-indexeddb/auto` est déjà importé globalement dans `src/setupTests.js` (`vite.config.js` → `test.setupFiles`), et **aucun** fichier de test du projet ne l'importe explicitement (`TodayView.test.jsx`, `PlanningView.test.jsx`, etc.) ; ajouter un import local à ce seul fichier casserait la convention établie sans bénéfice fonctionnel.
+- [x] [Review][Defer] Poor Accessibility for Empty Task Titles [src/components/WeekView.jsx] — deferred, pre-existing
+
+### Review Findings — Round 4 (après application des patches Round 3)
+
+Revue à 3 agents (Blind Hunter, Edge Case Hunter, Acceptance Auditor) sur le diff complet depuis `baseline_commit`. Auditeur de conformité : **0 finding**, spec et project-context.md respectés (AC, garde-fous techniques, patch Round 3 vérifiés conformes).
+
+- [x] [Review][Patch] Bouton « Exporter » cliquable pendant le chargement (imprime une page « Chargement de votre semaine… » au lieu de la grille) [src/components/WeekView.jsx] — corrigé : `disabled={isLoading}` sur le bouton, style `:disabled` ajouté dans `WeekView.css`, test ajouté vérifiant l'état désactivé pendant le chargement puis réactivé une fois les données résolues.
+- [x] [Review][Defer] Tâches orphelines invisibles si leur `plannedDayId` pointe vers un `PlannedDay` supprimé [src/components/WeekView.jsx, src/components/PlanningView.jsx] — deferred, pre-existing, systémique. Recoupe l'action item ouverte de la rétro Epic 3 (« Résorber les orphelins plannedDayId… avant de démarrer 4.1 », `sprint-status.yaml`) : voir `deferred-work.md`.
+- [x] [Review][Reject] Tri fragile de `sortByStartTime` (chaînes non alignées) — doublon du finding déjà vérifié en Round 2 : non atteignable, `startTime` vient toujours d'un `<input type="time">` (zero-padded `HH:MM`).
+- [x] [Review][Reject] Chargement intégral de `dayTemplates`/`timeBlocks`/`categories` sans borne — doublon du finding déjà différé en Round 2 (voir `deferred-work.md`).
+- [x] [Review][Reject] Absence de `useMemo` sur les maps/listes dérivées — doublon du finding déjà rejeté en Round 2 (sur-ingénierie au regard du volume réel).
+- [x] [Review][Reject] Portée du CSS `@media print` incertaine (chrome App non visible pour le Blind Hunter) — non fondé : vérifié par l'Edge Case Hunter (accès complet au projet), `App.jsx` ne contient aucun autre élément que `.app__nav` autour de `<main>` ; rien d'autre à masquer.
+- [x] [Review][Reject] `startTime`/`endTime` potentiellement `undefined` sur un bloc corrompu — non atteignable : les blocs horaires sont créés exclusivement via des `<input type="time">` dans `ConfigurationView.jsx`, jamais par import/API externe (même raisonnement que le reject déjà vérifié en Round 1 pour `parseISODate`).
+- [x] [Review][Reject] Recalcul de « today »/de la semaine sans mémoïsation ni écoute de rollover — doublon du finding déjà différé en Round 1 (« Données obsolètes si l'application reste ouverte », `deferred-work.md`).
+- [x] [Review][Reject — vérifié] Ajout de `level: 1` suspecté de masquer une collision de titres — vérifié faux : aucun `<h2>`/`<h3>` de vue ne partage le texte exact d'un titre d'App shell (`h1`) ; confirmé par l'Acceptance Auditor.
+- [x] [Review][Reject — vérifié] `plannedDaysByDate` écraserait un doublon de date — doublon du finding déjà vérifié en Round 2 : `plannedDays.date` est un index unique (`&date`, `src/db.js:74`).
+
 ## 🛠 Developer Context & Guardrails
 
 ### Technical & Architecture Requirements (MUST FOLLOW)
@@ -138,15 +159,22 @@ Cycle red-green-refactor suivi tâche par tâche :
 - 2026-07-06 : Implémentation Story 4.1 « Vue Semaine et Export » — vue de synthèse hebdomadaire en lecture seule (useLiveQuery/Dexie), export via `window.print()` + CSS `@media print`, onglet de navigation `#/semaine`, utilitaire de dates partagé. 14 tests ajoutés, suite 116/116 verte.
 - 2026-07-06 : Application des patches de revue de code — tâches sans plage horaire affichées (au lieu de masquées), race condition de chargement corrigée (5 `useLiveQuery` attendues), requête `plannedTasks` bornée à la semaine affichée (mémoire + O(N²)), suppression d'un formateur de date dupliqué, état hover sur le bouton Export, contraste renforcé en impression. 3 findings vérifiés sans correction nécessaire (DST, tri des heures, garde date malformée — non atteignables dans le périmètre de cette story). 1 test ajouté, suite 117/117 verte, lint 0, build OK.
 - 2026-07-07 : Round 2 de revue (Blind Hunter, Edge Case Hunter, Acceptance Auditor — auditeur conformité : 0 finding). 3 patches (tests en-tête de semaine et `timeBlockId` étranger, `aria-live` sur les états chargement/vide), 2 findings différés (chargement intégral des tables de config, absence de gestion d'erreur `useLiveQuery` — systémiques, pré-existants), 12 findings rejetés après vérification (non atteignables dans le code livré ou hors périmètre de l'AC). 2 tests ajoutés, suite 119/119 verte, lint 0, build OK.
+- 2026-07-08 : Round 3 — durcissement des assertions `getByRole('heading', ...)` de `App.test.jsx` avec `level: 1` (désambiguïsation App shell vs sous-titres de vue). Finding « import fake-indexeddb manquant » rejeté après vérification (déjà global via `setupTests.js`, cohérent avec tous les autres fichiers de test du projet). Suite 119/119 verte, lint 0.
+- 2026-07-08 : Round 4 de revue (Blind Hunter, Edge Case Hunter, Acceptance Auditor — auditeur conformité : 0 finding). 1 patch (bouton « Exporter » désactivé pendant le chargement, avec test dédié), 1 finding différé (tâches orphelines si `plannedDayId` pointe vers un `PlannedDay` supprimé — recoupe l'action item ouverte de la rétro Epic 3), 8 findings rejetés après vérification (doublons de findings déjà traités en Round 1/2, ou non atteignables). 1 test ajouté, suite 120/120 verte, lint 0.
 
 ---
 **Completion Note:** Ultimate context engine analysis completed - comprehensive developer guide created
 
 ## Suggested Review Order
 
+**Vue Semaine (composant, point d'entrée)**
+
+- Point d'entrée : composant de synthèse hebdomadaire en lecture seule (`useLiveQuery`/Dexie, AD-1).
+  [`WeekView.jsx:20`](../../src/components/WeekView.jsx#L20)
+
 **Calcul de la semaine (utilitaire partagé)**
 
-- Point d'entrée : bornes lundi→dimanche dérivées d'une seule date ISO, sans dépendance tierce (AD-6).
+- Bornes lundi→dimanche dérivées d'une seule date ISO, sans dépendance tierce (AD-6).
   [`weekRange.js:36`](../../src/services/weekRange.js#L36)
 
 - Le dimanche est rattaché à la semaine qui s'achève, pas à celle qui commence.
@@ -158,13 +186,10 @@ Cycle red-green-refactor suivi tâche par tâche :
 **Chargement des données et correction de la race condition (finding review)**
 
 - Les 5 `useLiveQuery` n'ont plus de valeur par défaut : `isLoading` attend qu'elles résolvent toutes, plus de flash "Modèle supprimé".
-  [`WeekView.jsx:29`](../../src/components/WeekView.jsx#L29)
+  [`WeekView.jsx:25`](../../src/components/WeekView.jsx#L25)
 
 - `plannedTasks` est bornée aux `plannedDayId` de la semaine affichée (`anyOf`) au lieu de tout l'historique des tâches.
   [`WeekView.jsx:35`](../../src/components/WeekView.jsx#L35)
-
-- Tâches groupées par jour une seule fois ; chaque bloc filtre sur `dayTasks` (borné) au lieu de la liste complète.
-  [`WeekView.jsx:64`](../../src/components/WeekView.jsx#L64)
 
 **Rendu et tâches sans plage horaire (finding review)**
 
@@ -174,29 +199,32 @@ Cycle red-green-refactor suivi tâche par tâche :
 - Section « Tâches sans plage horaire », même principe que l'orphelinage dans `TodayView`.
   [`WeekView.jsx:152`](../../src/components/WeekView.jsx#L152)
 
+**Export, impression et accessibilité (findings review, dont Round 4)**
+
+- Bouton « Exporter » désactivé tant que le chargement n'est pas terminé (Round 4 : évitait un export vide/en cours).
+  [`WeekView.jsx:78`](../../src/components/WeekView.jsx#L78)
+
+- Style `:disabled` correspondant (opacité + curseur), même pattern que les autres boutons de l'app.
+  [`WeekView.css:40`](../../src/components/WeekView.css#L40)
+
+- CSS `@media print` : masque la navigation/le bouton d'export, contraste renforcé, grille pleine largeur.
+  [`WeekView.css:178`](../../src/components/WeekView.css#L178)
+
+- `aria-live="polite"` sur les états chargement/vide.
+  [`WeekView.jsx:89`](../../src/components/WeekView.jsx#L89)
+
 **Intégration navigation**
 
 - Nouvel onglet « Semaine » branché sur le routeur hash existant (`viewFromHash`/`navigate`/`titlesByView`).
   [`App.jsx:187`](../../src/App.jsx#L187)
-
-**Impression et accessibilité (findings review)**
-
-- État hover ajouté sur le bouton d'export, absent jusqu'ici.
-  [`WeekView.css:36`](../../src/components/WeekView.css#L36)
-
-- Contraste renforcé en impression : le texte accent/secondaire repasse en couleur principale.
-  [`WeekView.css:202`](../../src/components/WeekView.css#L202)
-
-- `aria-live="polite"` sur les états chargement/vide.
-  [`WeekView.jsx:83`](../../src/components/WeekView.jsx#L83)
 
 **Tests (périphériques)**
 
 - Tests unitaires du calcul de semaine (7 cas : bornes, franchissement mois/année, DST implicite).
   [`weekRange.test.js:1`](../../src/services/weekRange.test.js#L1)
 
-- Tests du composant : synthèse, état vide, borne Dexie, export, tâches sans plage horaire, `timeBlockId` étranger, en-tête.
+- Tests du composant : synthèse, état vide, borne Dexie, export (+ désactivation pendant le chargement, Round 4), tâches sans plage horaire, `timeBlockId` étranger, en-tête.
   [`WeekView.test.jsx:1`](../../src/components/WeekView.test.jsx#L1)
 
-- Test de routage vers l'onglet Semaine.
+- Tests de routage (dont l'onglet Semaine) durcis avec `level: 1` pour désambiguïser le titre d'App shell des sous-titres de vue (Round 3).
   [`App.test.jsx:71`](../../src/App.test.jsx#L71)

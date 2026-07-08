@@ -24,7 +24,7 @@ describe('App', () => {
 
   it("shows the Aujourd'hui view by default", () => {
     render(<App />)
-    expect(screen.getByRole('heading', { name: "Aujourd'hui" })).toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: "Aujourd'hui", level: 1 })).toBeInTheDocument()
   })
 
   it('navigates to Dépôt and updates the hash', async () => {
@@ -32,7 +32,7 @@ describe('App', () => {
 
     screen.getByRole('button', { name: 'Dépôt' }).click()
 
-    expect(await screen.findByRole('heading', { name: 'Dépôt' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Dépôt', level: 1 })).toBeInTheDocument()
     expect(window.location.hash).toBe('#/depot')
   })
 
@@ -41,7 +41,7 @@ describe('App', () => {
 
     screen.getByRole('button', { name: 'Configuration' }).click()
 
-    expect(await screen.findByRole('heading', { name: 'Configuration' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Configuration', level: 1 })).toBeInTheDocument()
     expect(window.location.hash).toBe('#/configuration')
   })
 
@@ -49,11 +49,11 @@ describe('App', () => {
     render(<App />)
 
     screen.getByRole('button', { name: 'Configuration' }).click()
-    await screen.findByRole('heading', { name: 'Configuration' })
+    await screen.findByRole('heading', { name: 'Configuration', level: 1 })
 
     window.history.back()
 
-    expect(await screen.findByRole('heading', { name: "Aujourd'hui" })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: "Aujourd'hui", level: 1 })).toBeInTheDocument()
   })
 
   it('navigates to Planification and updates the hash', async () => {
@@ -61,7 +61,7 @@ describe('App', () => {
 
     screen.getByRole('button', { name: 'Planification' }).click()
 
-    expect(await screen.findByRole('heading', { name: 'Planification' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Planification', level: 1 })).toBeInTheDocument()
     expect(window.location.hash).toBe('#/planification')
   })
 
@@ -70,7 +70,7 @@ describe('App', () => {
 
     screen.getByRole('button', { name: 'Semaine' }).click()
 
-    expect(await screen.findByRole('heading', { name: 'Semaine' })).toBeInTheDocument()
+    expect(await screen.findByRole('heading', { name: 'Semaine', level: 1 })).toBeInTheDocument()
     expect(window.location.hash).toBe('#/semaine')
   })
 
@@ -79,8 +79,8 @@ describe('App', () => {
 
     render(<App />)
 
-    expect(screen.getByRole('heading', { name: 'Page introuvable' })).toBeInTheDocument()
-    expect(screen.queryByRole('heading', { name: "Aujourd'hui" })).not.toBeInTheDocument()
+    expect(screen.getByRole('heading', { name: 'Page introuvable', level: 1 })).toBeInTheDocument()
+    expect(screen.queryByRole('heading', { name: "Aujourd'hui", level: 1 })).not.toBeInTheDocument()
   })
 
   it('shows a recovery screen with a reset action when the database fails to open', async () => {
@@ -89,7 +89,7 @@ describe('App', () => {
     render(<App />)
 
     expect(
-      await screen.findByRole('heading', { name: /vos données n'ont pas pu être ouvertes/i }),
+      await screen.findByRole('heading', { name: /vos données n'ont pas pu être ouvertes/i, level: 1 }),
     ).toBeInTheDocument()
     expect(
       screen.getByRole('button', { name: /réinitialiser les données/i }),

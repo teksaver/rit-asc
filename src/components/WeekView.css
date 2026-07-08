@@ -37,6 +37,11 @@
   filter: brightness(0.92);
 }
 
+.week-view__export:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
 .week-view__export:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;

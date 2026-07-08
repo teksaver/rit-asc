@@ -75,7 +75,12 @@ export function WeekView() {
           Semaine du {DAY_MONTH_FORMATTER.format(parseISODate(mondayISO))} au{' '}
           {DAY_MONTH_FORMATTER.format(parseISODate(sundayISO))}
         </h2>
-        <button type="button" className="week-view__export" onClick={() => window.print()}>
+        <button
+          type="button"
+          className="week-view__export"
+          disabled={isLoading}
+          onClick={() => window.print()}
+        >
           Exporter
         </button>
       </div>

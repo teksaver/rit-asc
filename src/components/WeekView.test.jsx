@@ -1,5 +1,5 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest'
-import { render, screen, fireEvent, within } from '@testing-library/react'
+import { render, screen, fireEvent, waitFor, within } from '@testing-library/react'
 import { WeekView } from './WeekView'
 import { db } from '../db'
 
@@ -108,9 +108,18 @@ describe('WeekView', () => {
     render(<WeekView />)
 
     const exportButton = await screen.findByRole('button', { name: /exporter/i })
+    await waitFor(() => expect(exportButton).not.toBeDisabled())
     fireEvent.click(exportButton)
 
     expect(printSpy).toHaveBeenCalledTimes(1)
+  })
+
+  it('désactive le bouton « Exporter » tant que la semaine charge', async () => {
+    render(<WeekView />)
+
+    expect(screen.getByRole('button', { name: /exporter/i })).toBeDisabled()
+
+    await waitFor(() => expect(screen.getByRole('button', { name: /exporter/i })).not.toBeDisabled())
   })
 
   it('affiche les tâches planifiées sans plage horaire au lieu de les masquer', async () => {

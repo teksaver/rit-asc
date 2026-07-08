@@ -404,4 +404,187 @@ describe('TodayView', () => {
     expect(await screen.findByText('Tâche orpheline')).toBeInTheDocument()
     expect(screen.getByText(/leur plage horaire n'existe plus/i)).toBeInTheDocument()
   })
+
+  describe('Bouton Magique (suggestions)', () => {
+    it('affiche le bouton "Que pourrais-je faire ?" sur une plage vide', async () => {
+      vi.setSystemTime(new Date('2026-07-06T08:00:00'))
+      const dayTemplateId = crypto.randomUUID()
+      await db.dayTemplates.add({ id: dayTemplateId, name: 'Télétravail' })
+      await db.timeBlocks.add({
+        id: crypto.randomUUID(),
+        dayTemplateId,
+        categoryId: null,
+        startTime: '10:00',
+        endTime: '11:00',
+      })
+      await db.plannedDays.add({ id: crypto.randomUUID(), date: '2026-07-06', dayTemplateId })
+
+      render(<TodayView />)
+
+      expect(await screen.findByRole('button', { name: 'Que pourrais-je faire ?' })).toBeInTheDocument()
+    })
+
+    it("affiche le bouton même quand la plage est remplie et n'est pas en cours, pour rouvrir les suggestions", async () => {
+      vi.setSystemTime(new Date('2026-07-06T08:00:00'))
+      const dayTemplateId = crypto.randomUUID()
+      await db.dayTemplates.add({ id: dayTemplateId, name: 'Télétravail' })
+      const blockId = crypto.randomUUID()
+      await db.timeBlocks.add({
+        id: blockId,
+        dayTemplateId,
+        categoryId: null,
+        startTime: '10:00',
+        endTime: '11:00',
+      })
+      const plannedDayId = crypto.randomUUID()
+      await db.plannedDays.add({ id: plannedDayId, date: '2026-07-06', dayTemplateId })
+      await db.tasks.add({
+        id: crypto.randomUUID(),
+        title: 'Déjà planifiée',
+        status: 'inbox',
+        createdAt: new Date().toISOString(),
+        categoryId: null,
+        priority: 'could',
+        plannedDayId,
+        timeBlockId: blockId,
+        checklist: [],
+      })
+
+      render(<TodayView />)
+
+      expect(await screen.findByText('Déjà planifiée')).toBeInTheDocument()
+      expect(screen.getByRole('button', { name: 'Que pourrais-je faire ?' })).toBeInTheDocument()
+    })
+
+    it('affiche le bouton quand la plage est en cours, même remplie', async () => {
+      vi.setSystemTime(new Date('2026-07-06T10:30:00'))
+      const dayTemplateId = crypto.randomUUID()
+      await db.dayTemplates.add({ id: dayTemplateId, name: 'Télétravail' })
+      const blockId = crypto.randomUUID()
+      await db.timeBlocks.add({
+        id: blockId,
+        dayTemplateId,
+        categoryId: null,
+        startTime: '10:00',
+        endTime: '11:00',
+      })
+      const plannedDayId = crypto.randomUUID()
+      await db.plannedDays.add({ id: plannedDayId, date: '2026-07-06', dayTemplateId })
+      await db.tasks.add({
+        id: crypto.randomUUID(),
+        title: 'Déjà planifiée',
+        status: 'inbox',
+        createdAt: new Date().toISOString(),
+        categoryId: null,
+        priority: 'could',
+        plannedDayId,
+        timeBlockId: blockId,
+        checklist: [],
+      })
+
+      render(<TodayView />)
+
+      expect(await screen.findByRole('button', { name: 'Que pourrais-je faire ?' })).toBeInTheDocument()
+    })
+
+    it('suggère les tâches du dépôt filtrées par catégorie et triées par priorité, et permet de les affecter', async () => {
+      vi.setSystemTime(new Date('2026-07-06T08:00:00'))
+      const dayTemplateId = crypto.randomUUID()
+      await db.dayTemplates.add({ id: dayTemplateId, name: 'Télétravail' })
+      const categoryId = crypto.randomUUID()
+      const otherCategoryId = crypto.randomUUID()
+      await db.categories.add({ id: categoryId, name: 'Deep Work', color: '#BFDBFE' })
+      await db.categories.add({ id: otherCategoryId, name: 'Admin', color: '#FBCFE8' })
+      const blockId = crypto.randomUUID()
+      await db.timeBlocks.add({
+        id: blockId,
+        dayTemplateId,
+        categoryId,
+        startTime: '10:00',
+        endTime: '11:00',
+      })
+      await db.plannedDays.add({ id: crypto.randomUUID(), date: '2026-07-06', dayTemplateId })
+
+      const shouldTaskId = crypto.randomUUID()
+      const mustTaskId = crypto.randomUUID()
+      await db.tasks.add({
+        id: shouldTaskId,
+        title: 'Tâche reportable',
+        status: 'inbox',
+        createdAt: new Date().toISOString(),
+        categoryId,
+        priority: 'should',
+        plannedDayId: '',
+        timeBlockId: null,
+        checklist: [],
+      })
+      await db.tasks.add({
+        id: mustTaskId,
+        title: 'Tâche non négociable',
+        status: 'inbox',
+        createdAt: new Date().toISOString(),
+        categoryId,
+        priority: 'must',
+        plannedDayId: '',
+        timeBlockId: null,
+        checklist: [],
+      })
+      await db.tasks.add({
+        id: crypto.randomUUID(),
+        title: "Tâche d'une autre catégorie",
+        status: 'inbox',
+        createdAt: new Date().toISOString(),
+        categoryId: otherCategoryId,
+        priority: 'must',
+        plannedDayId: '',
+        timeBlockId: null,
+        checklist: [],
+      })
+
+      render(<TodayView />)
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Que pourrais-je faire ?' }))
+
+      const suggestionsPanel = document.querySelector('.today-view__suggestions')
+      const mustSuggestion = await within(suggestionsPanel).findByText('Tâche non négociable')
+      const shouldSuggestion = within(suggestionsPanel).getByText('Tâche reportable')
+      expect(within(suggestionsPanel).queryByText("Tâche d'une autre catégorie")).not.toBeInTheDocument()
+
+      const suggestionCards = within(suggestionsPanel)
+        .getAllByRole('listitem')
+        .filter((el) => el.className.includes('task-card'))
+      expect(suggestionCards[0]).toContainElement(mustSuggestion)
+      expect(suggestionCards[1]).toContainElement(shouldSuggestion)
+
+      const suggestionRow = mustSuggestion.closest('.task-card')
+      fireEvent.change(within(suggestionRow).getByLabelText('Affecter à'), { target: { value: blockId } })
+
+      await waitFor(async () => {
+        const task = await db.tasks.get(mustTaskId)
+        expect(task).toMatchObject({ timeBlockId: blockId })
+      })
+    })
+
+    it("affiche une micro-copy bienveillante quand aucune tâche ne correspond", async () => {
+      vi.setSystemTime(new Date('2026-07-06T08:00:00'))
+      const dayTemplateId = crypto.randomUUID()
+      await db.dayTemplates.add({ id: dayTemplateId, name: 'Télétravail' })
+      await db.timeBlocks.add({
+        id: crypto.randomUUID(),
+        dayTemplateId,
+        categoryId: null,
+        startTime: '10:00',
+        endTime: '11:00',
+      })
+      await db.plannedDays.add({ id: crypto.randomUUID(), date: '2026-07-06', dayTemplateId })
+
+      render(<TodayView />)
+
+      fireEvent.click(await screen.findByRole('button', { name: 'Que pourrais-je faire ?' }))
+
+      expect(
+        await screen.findByText("Aucune tâche spécifique pour l'instant, quartier libre !", { exact: false }),
+      ).toBeInTheDocument()
+    })
+  })
 })

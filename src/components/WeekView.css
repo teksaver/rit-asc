@@ -1,0 +1,211 @@
+.week-view {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: var(--spacing-md);
+}
+
+.week-view__header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  align-items: center;
+  justify-content: space-between;
+}
+
+.week-view__heading {
+  margin: 0;
+  font-size: 18px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.week-view__export {
+  border: none;
+  border-radius: var(--radius-full);
+  padding: 0 var(--spacing-lg);
+  min-height: 44px;
+  min-width: 44px;
+  font-size: 14px;
+  color: var(--color-surface);
+  background: var(--color-accent);
+  cursor: pointer;
+  transition: background 0.2s ease;
+}
+
+.week-view__export:hover {
+  filter: brightness(0.92);
+}
+
+.week-view__export:disabled {
+  opacity: 0.6;
+  cursor: not-allowed;
+}
+
+.week-view__export:focus-visible {
+  outline: 2px solid var(--color-accent);
+  outline-offset: 2px;
+}
+
+.week-view__loading,
+.week-view__empty {
+  margin: 0;
+  color: var(--color-text-secondary);
+  line-height: 1.5;
+}
+
+/* Mobile : défilement vertical, une journée par ligne. */
+.week-view__days {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: var(--spacing-md);
+}
+
+/* Tablette / Bureau : grille multi-colonnes pour la vue d'ensemble. */
+@media (min-width: 720px) {
+  .week-view__days {
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+  }
+}
+
+.week-view__day {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-md);
+  background: var(--color-surface);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-card);
+}
+
+.week-view__day-label {
+  margin: 0;
+  font-size: 14px;
+  font-weight: var(--font-weight-bold);
+  color: var(--color-text-primary);
+}
+
+.week-view__day-empty {
+  margin: 0;
+  font-size: 13px;
+  color: var(--color-text-secondary);
+}
+
+.week-view__day-body {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.week-view__day-template {
+  margin: 0;
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-accent);
+}
+
+.week-view__blocks,
+.week-view__block-tasks {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.week-view__blocks {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+}
+
+.week-view__block {
+  padding: var(--spacing-sm);
+  background: var(--color-background);
+  border-radius: var(--radius-sm);
+}
+
+.week-view__block-header {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--spacing-sm);
+  align-items: baseline;
+  justify-content: space-between;
+}
+
+.week-view__block-time {
+  font-size: 13px;
+  font-weight: var(--font-weight-medium);
+  color: var(--color-text-primary);
+}
+
+.week-view__block-category {
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+.week-view__block-tasks {
+  margin-top: var(--spacing-sm);
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.week-view__block-task {
+  font-size: 13px;
+  color: var(--color-text-primary);
+}
+
+.week-view__day-orphaned {
+  display: flex;
+  flex-direction: column;
+  gap: var(--spacing-sm);
+  padding: var(--spacing-sm) var(--spacing-md);
+  border-radius: var(--radius-md);
+  background: var(--color-background);
+}
+
+.week-view__day-orphaned-heading {
+  margin: 0;
+  font-size: 12px;
+  color: var(--color-text-secondary);
+}
+
+/* Impression système / export PDF : on masque la navigation applicative et le
+   bouton d'export, on neutralise ombres et couleurs de fond pour un rendu papier
+   propre, et on déploie la grille sur toute la largeur de la page. */
+@media print {
+  .app__nav,
+  .week-view__export {
+    display: none;
+  }
+
+  .week-view {
+    padding: 0;
+  }
+
+  .week-view__days {
+    grid-template-columns: repeat(2, 1fr);
+    gap: 8px;
+  }
+
+  .week-view__day {
+    box-shadow: none;
+    border: 1px solid var(--color-muted);
+    break-inside: avoid;
+    page-break-inside: avoid;
+  }
+
+  .week-view__block {
+    background: transparent;
+    border: 1px solid var(--color-muted);
+  }
+
+  /* Le texte accent/secondaire (violet, gris clair) est peu lisible une fois
+     imprimé en noir et blanc : on repasse sur la couleur de texte principale. */
+  .week-view__day-template,
+  .week-view__block-category {
+    color: var(--color-text-primary);
+  }
+}

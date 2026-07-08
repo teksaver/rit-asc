@@ -88,3 +88,20 @@
 ## Deferred from: code review of 3-3-suggestions-denrichissement-sur-report.md (2026-07-06)
 
 - Hardcoded Business Logic in UI Layer [src/components/TaskCard.jsx] — The 48-hour threshold is hardcoded in the presentation component.
+
+## Deferred from: code review of 4-1-vue-semaine-et-export.md (2026-07-06)
+
+- Données obsolètes si l'application reste ouverte: todayISO() est calculé une fois au montage. Si on laisse la page ouverte plusieurs jours, la semaine ne se met pas à jour.
+
+## Deferred from: patch-round review of 4-1-vue-semaine-et-export.md (2026-07-06)
+
+- Chargement intégral de `dayTemplates`/`timeBlocks`/`categories` [src/components/WeekView.jsx, src/components/TodayView.jsx] — pré-existant, pattern déjà en place dans `TodayView`/`PlanningView` : ces tables de configuration sont chargées en entier via `useLiveQuery(... .toArray())` sans borne. Sans risque au volume actuel (créées manuellement, en petit nombre), mais à surveiller si un utilisateur accumule beaucoup de modèles/plages horaires.
+- Aucune gestion d'erreur/boundary sur le rejet d'un `useLiveQuery` [toute l'app, ex. src/components/WeekView.jsx, TodayView.jsx, PlanningView.jsx] — pré-existant, systémique : si une requête Dexie échoue (ex. IndexedDB indisponible), l'état de chargement reste bloqué indéfiniment sans message d'erreur pour l'utilisateur. Nécessiterait une Error Boundary ou un état d'erreur explicite au niveau de l'app, hors périmètre d'une story individuelle.
+
+## Deferred from: code review (2026-07-07) 4-1-vue-semaine-et-export
+
+- Poor Accessibility for Empty Task Titles [src/components/WeekView.jsx] — If a task title is inadvertently saved as an empty string, the markup blindly renders an empty tag (<li className="week-view__block-task"></li>).
+
+## Deferred from: code review round 4 (2026-07-08) 4-1-vue-semaine-et-export
+
+- Tâches orphelines invisibles si leur `plannedDayId` pointe vers un `PlannedDay` supprimé [src/components/WeekView.jsx, src/components/PlanningView.jsx] — pré-existant, systémique : `performDuplicate` (`PlanningView.jsx`) peut supprimer un `PlannedDay` sans réaffecter/nettoyer les tâches qui le référencent. `WeekView` ne scope ses tâches qu'aux `plannedDayId` des `PlannedDay` actuellement existants pour la semaine, donc une tâche orpheline disparaît silencieusement de la vue (sans apparaître dans la section « sans plage horaire », qui ne couvre que les `timeBlockId` orphelins d'un `plannedDay` existant). Recoupe l'action item ouverte de la rétro Epic 3 : « Résorber les orphelins plannedDayId (réaffecter/nettoyer les tâches à la suppression d'un PlannedDay) avant de démarrer 4.1 » (sprint-status.yaml).

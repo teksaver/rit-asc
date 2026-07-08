@@ -1,7 +1,8 @@
-import { useEffect, useState } from 'react'
+import { useEffect, useMemo, useState } from 'react'
 import { useLiveQuery } from 'dexie-react-hooks'
 import { db, UNASSIGNED_PLANNED_DAY_ID } from '../db'
 import { ensureOnboarding } from '../services/onboarding'
+import { suggestTasksForBlock } from '../services/suggestionEngine'
 import { TaskCard } from './TaskCard'
 import './TodayView.css'
 
@@ -70,6 +71,7 @@ export function TodayView() {
   const [errorMsg, setErrorMsg] = useState('')
   const [onboardingDone, setOnboardingDone] = useState(false)
   const [hoveredBlockId, setHoveredBlockId] = useState(null)
+  const [suggestionBlockId, setSuggestionBlockId] = useState(null)
 
   useEffect(() => {
     let cancelled = false
@@ -115,23 +117,43 @@ export function TodayView() {
     [],
   )
 
-  const categoriesById = categories.reduce((acc, category) => {
-    acc[category.id] = category
-    return acc
-  }, {})
+  const categoriesById = useMemo(
+    () =>
+      categories.reduce((acc, category) => {
+        acc[category.id] = category
+        return acc
+      }, {}),
+    [categories],
+  )
 
-  const sortedTimeBlocks = [...timeBlocks].sort((a, b) =>
-    a.startTime < b.startTime ? -1 : a.startTime > b.startTime ? 1 : 0,
+  const sortedTimeBlocks = useMemo(
+    () =>
+      [...timeBlocks].sort((a, b) =>
+        a.startTime < b.startTime ? -1 : a.startTime > b.startTime ? 1 : 0,
+      ),
+    [timeBlocks],
   )
-  const timeBlockIds = new Set(sortedTimeBlocks.map((block) => block.id))
-  const orphanedTasks = tasksForDay.filter((task) => !timeBlockIds.has(task.timeBlockId))
-  const sortedInboxTasks = [...inboxTasks].sort((a, b) =>
-    a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0,
+  const timeBlockIds = useMemo(() => new Set(sortedTimeBlocks.map((block) => block.id)), [sortedTimeBlocks])
+  const orphanedTasks = useMemo(
+    () => tasksForDay.filter((task) => !timeBlockIds.has(task.timeBlockId)),
+    [tasksForDay, timeBlockIds],
   )
-  const assignOptions = sortedTimeBlocks.map((block) => ({
-    id: block.id,
-    label: `${block.startTime} – ${block.endTime}`,
-  }))
+  const safeInboxTasks = useMemo(() => inboxTasks ?? [], [inboxTasks])
+  const sortedInboxTasks = useMemo(
+    () =>
+      [...safeInboxTasks].sort((a, b) =>
+        a.createdAt < b.createdAt ? 1 : a.createdAt > b.createdAt ? -1 : 0,
+      ),
+    [safeInboxTasks],
+  )
+  const assignOptions = useMemo(
+    () =>
+      sortedTimeBlocks.map((block) => ({
+        id: block.id,
+        label: `${block.startTime} – ${block.endTime}`,
+      })),
+    [sortedTimeBlocks],
+  )
 
   const assignTask = async (taskId, blockId) => {
     if (isSubmitting || !plannedDay || !blockId) return
@@ -139,6 +161,7 @@ export function TodayView() {
     setErrorMsg('')
     try {
       await db.tasks.update(taskId, { plannedDayId: plannedDay.id, timeBlockId: blockId })
+      if (suggestionBlockId === blockId) setSuggestionBlockId(null)
     } catch (err) {
       console.error(err)
       setErrorMsg("Impossible d'affecter cette tâche pour le moment.")
@@ -202,6 +225,15 @@ export function TodayView() {
               const category = categoriesById[block.categoryId]
               const assignedTasks = tasksForDay.filter((task) => task.timeBlockId === block.id)
               const isDropTarget = hoveredBlockId === block.id
+              const isSuggestionOpen = suggestionBlockId === block.id
+              let suggestions = []
+              if (isSuggestionOpen) {
+                try {
+                  suggestions = suggestTasksForBlock(safeInboxTasks, block)
+                } catch (e) {
+                  console.error('Suggestion engine error:', e)
+                }
+              }
 
               return (
                 <li
@@ -233,6 +265,46 @@ export function TodayView() {
                     </ul>
                   ) : (
                     <p className="today-view__no-task">Aucune tâche affectée.</p>
+                  )}
+
+                  <button
+                    type="button"
+                    className="today-view__ghost-button"
+                    aria-expanded={isSuggestionOpen}
+                    aria-controls={`suggestions-${block.id}`}
+                    onClick={() =>
+                      setSuggestionBlockId((currentId) => (currentId === block.id ? null : block.id))
+                    }
+                    onKeyDown={(e) => {
+                      if (e.key === 'Escape' && isSuggestionOpen) {
+                        setSuggestionBlockId(null)
+                      }
+                    }}
+                  >
+                    {isSuggestionOpen ? 'Fermer les suggestions' : 'Que pourrais-je faire ?'}
+                  </button>
+
+                  {isSuggestionOpen && (
+                    <div className="today-view__suggestions" id={`suggestions-${block.id}`}>
+                      {suggestions.length === 0 ? (
+                        <p className="today-view__no-task">
+                          Aucune tâche spécifique pour l'instant, quartier libre !
+                        </p>
+                      ) : (
+                        <ul className="today-view__tasks">
+                          {suggestions.map((task) => (
+                            <TaskCard
+                              key={task.id}
+                              task={task}
+                              categoriesMap={categoriesById}
+                              assignOptions={assignOptions}
+                              onAssign={assignTask}
+                              disabled={isSubmitting}
+                            />
+                          ))}
+                        </ul>
+                      )}
+                    </div>
                   )}
                 </li>
               )
